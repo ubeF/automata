@@ -1,17 +1,23 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Eta reduce" #-}
+{-# HLINT ignore "Use map" #-}
+
 data DFA state input = DFA state (state -> input -> state) (state -> Bool)
 
-data NFA state input = NFA state (state -> input -> [state]) (state -> Bool)
+data NFA state input = NFA state (state -> input -> [state]) (state -> Bool) input
 
 evalDFA :: DFA a b -> [b] -> Bool
-evalDFA (DFA init trans acc) = acc . foldr (flip trans) init
+evalDFA (DFA init trans acc) input = acc . foldr (flip trans) init $ input
+
+generateConfigs :: (state -> input -> [state]) -> state -> input -> [input] -> [(state, [input])]
+generateConfigs transition state input rest = zip (transition state input) (repeat rest)
 
 evalNFA :: NFA a b -> [b] -> Bool
-evalNFA (NFA state transition accept) [] = accept state
-evalNFA (NFA state transition accept) (x:xs) = any recurse newStates
-  where newStates = transition state x
-        recurse newState = evalNFA (NFA newState transition accept) xs
-
-
+evalNFA (NFA initial transition accept epsilon) vals = run (initial, vals)
+  where generate = generateConfigs transition
+        run (state, []) = accept state || any run (generate state epsilon [])
+        run (state, x:xs) = any run (generate state x xs <> generate state epsilon (x:xs))
+        
 data State = Odd | Even deriving (Show, Eq)
 data Input = Zero | One deriving (Show)
 
