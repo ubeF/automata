@@ -1,7 +1,10 @@
-module Automata.NFA (NFA (..), eval) where 
+module Automata.NFA (NFA (..), Alphabet, eval, makeCharNFA) where 
 
 class Alphabet a where
   epsilon :: a
+
+instance Alphabet Char where
+  epsilon = toEnum 0
 
 data NFA state input = NFA state (state -> input -> [state]) (state -> Bool)
 
@@ -35,6 +38,7 @@ evaluateConfigs accept configs
   | any (evaluateConfig accept) configs = Success
   | otherwise = Continue
 
-
+makeCharNFA :: Eq state => state -> (state -> Char -> [state]) -> [state] -> NFA state Char
+makeCharNFA initial transition acceptStates = NFA initial transition (`elem` acceptStates) 
 
 
