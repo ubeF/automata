@@ -1,4 +1,4 @@
-module Automata.DFA (DFA, eval) where 
+module Automata.DFA (DFA (..), eval) where 
 
 data DFA state input = DFA state (state -> input -> state) (state -> Bool)
 

@@ -1,8 +1,10 @@
-import Automata.NFA
+module Test2 where
 
-data State = Q0 | Q1 | Q2 | Q3 deriving (Eq)
+import qualified Automata.NFA as NFA
 
-transition :: State -> Char -> [State]
+data MyState = Q0 | Q1 | Q2 | Q3 deriving (Eq)
+
+transition :: MyState -> Char -> [MyState]
 transition _ 'e' = []
 transition Q0 'a' = [Q0, Q1]
 transition Q0 'b' = [Q0]
@@ -13,5 +15,5 @@ transition Q2 'b' = []
 transition Q3 'a' = [Q3]
 transition Q3 'b' = [Q3]
 
-testNFA :: NFA State Char
-testNFA = NFA Q0 transition (==Q3) 'e'
+automaton :: NFA.NFA MyState Char
+automaton = NFA.NFA Q0 transition (==Q3) 'e'
