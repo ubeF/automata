@@ -35,12 +35,6 @@ evaluateConfigs accept configs
   | any (evaluateConfig accept) configs = Success
   | otherwise = Continue
 
--- evalNFA :: NFA a b -> [b] -> Bool
--- evalNFA (NFA initial transition accept epsilon) vals = run (initial, vals)
---   where generate = generateConfigs transition
---         run (state, []) = accept state || any run (generate state epsilon [])
---         run (state, x:xs) = any run (generate state x xs <> generate state epsilon (x:xs))
-
 
 
 
