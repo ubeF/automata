@@ -9,8 +9,12 @@
 /home/felix/Documents/Main/Projects/automata/README.md:
   hash: 17abf3a2a53f73f4ad07a735537872a6f6ecfb1a9759456a7e7cd9bcbe369954
 /home/felix/Documents/Main/Projects/automata/automata.cabal:
-  hash: ef01c4bca2d56af2afe4e9a77d04a905b8e6dd5bc82d9bd2a3ded088d52de562
+  hash: a846561a09762bea46ac670af71836da0aba6850cffc520051df734507184e1f
 /home/felix/Documents/Main/Projects/automata/package.yaml:
-  hash: ec6e9a104ab8b26b992ada700c601261d2c6e772e172a7c4bbec6bbea87b566a
+  hash: 44e3a2ebb7e4808f83f21db39a31df38e4b38ae5db313f641b884f59568b6710
+/home/felix/Documents/Main/Projects/automata/src/Automata/DFA.hs:
+  hash: 970c0e500d5b1b35cc9b51778868aba53c644955c177259767626bfb704fa518
+/home/felix/Documents/Main/Projects/automata/src/Automata/NFA.hs:
+  hash: 393d8eedebcd9e4a29369c93694e9c572641907e4828a4e2d6b3746bc50dc531
 /usr/include/stdc-predef.h:
   hash: d6bcc58441a423bbb3a52171fcd3b84d8b36e332a55221a1c3e6e899bc43ccb3

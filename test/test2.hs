@@ -1,3 +1,5 @@
+import Automata.NFA
+
 data State = Q0 | Q1 | Q2 | Q3 deriving (Eq)
 
 transition :: State -> Char -> [State]

@@ -24,6 +24,9 @@ source-repository head
   location: https://github.com/githubuser/automata
 
 library
+  exposed-modules:
+      Automata.NFA
+      Automata.DFA
   other-modules:
       Paths_automata
   hs-source-dirs:
