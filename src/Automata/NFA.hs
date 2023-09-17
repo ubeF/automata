@@ -1,4 +1,4 @@
-module Automata.NFA (NFA (..), Alphabet, eval, makeCharNFA) where 
+module Automata.NFA (NFA (..), Alphabet (..), eval, makeCharNFA) where 
 
 class Alphabet a where
   epsilon :: a
