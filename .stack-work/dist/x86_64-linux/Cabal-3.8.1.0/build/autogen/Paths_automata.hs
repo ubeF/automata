@@ -42,12 +42,12 @@ getBinDir, getLibDir, getDynLibDir, getDataDir, getLibexecDir, getSysconfDir :: 
 
 
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
-bindir     = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/bin"
-libdir     = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/lib/x86_64-linux-ghc-9.4.7/automata-0.1.0.0-9HJPpQBvcAc2LNDau2BI37"
-dynlibdir  = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/lib/x86_64-linux-ghc-9.4.7"
-datadir    = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/share/x86_64-linux-ghc-9.4.7/automata-0.1.0.0"
-libexecdir = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/libexec/x86_64-linux-ghc-9.4.7/automata-0.1.0.0"
-sysconfdir = "/home/felix/Documents/Main/Projects/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/etc"
+bindir     = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/bin"
+libdir     = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/lib/x86_64-linux-ghc-9.4.7/automata-0.1.0.0-AcfcrVY0F9U4bKqtH32F7g"
+dynlibdir  = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/lib/x86_64-linux-ghc-9.4.7"
+datadir    = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/share/x86_64-linux-ghc-9.4.7/automata-0.1.0.0"
+libexecdir = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/libexec/x86_64-linux-ghc-9.4.7/automata-0.1.0.0"
+sysconfdir = "/home/felix/Development/automata/.stack-work/install/x86_64-linux/c79a3d9f6dc4056351adde105d444416741444c6cfed3b94c9a6099eb94ecd1d/9.4.7/etc"
 
 getBinDir     = catchIO (getEnv "automata_bindir")     (\_ -> return bindir)
 getLibDir     = catchIO (getEnv "automata_libdir")     (\_ -> return libdir)

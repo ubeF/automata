@@ -1,0 +1,18 @@
+/home/felix/.ghcup/ghc/9.4.7/lib64/ghc-9.4.7/lib/x86_64-linux-ghc-9.4.7/rts-1.0.2/include/ghcversion.h:
+  hash: ee548d48ca5c94d7c7fab127ec07be47b01afa24d6495358aa9ff6cfc8541c81
+/home/felix/Development/automata/.stack-work/dist/x86_64-linux/Cabal-3.8.1.0/build/automata-exe/autogen/Paths_automata.hs:
+  hash: 80224cffabd77fc4e9e2e71412d778c46ccfb77a6bd3cfe0a605c5fa066f1a5b
+/home/felix/Development/automata/.stack-work/dist/x86_64-linux/Cabal-3.8.1.0/build/automata-exe/autogen/cabal_macros.h:
+  hash: 775a9f0839ccc91ec8c65e34c5471f6a297591faa226a1281abaf72ce5d1dfa7
+/home/felix/Development/automata/CHANGELOG.md:
+  hash: e03bd912f45474b1fc67617cbf1516752818f3c35bd55af700745adb58cb1011
+/home/felix/Development/automata/README.md:
+  hash: 17abf3a2a53f73f4ad07a735537872a6f6ecfb1a9759456a7e7cd9bcbe369954
+/home/felix/Development/automata/app/Main.hs:
+  hash: ab68141debcc0ae83508522af8006b78452d003f030d23c98badb740ea7dfb48
+/home/felix/Development/automata/automata.cabal:
+  hash: a846561a09762bea46ac670af71836da0aba6850cffc520051df734507184e1f
+/home/felix/Development/automata/package.yaml:
+  hash: 44e3a2ebb7e4808f83f21db39a31df38e4b38ae5db313f641b884f59568b6710
+/usr/include/stdc-predef.h:
+  hash: d6bcc58441a423bbb3a52171fcd3b84d8b36e332a55221a1c3e6e899bc43ccb3

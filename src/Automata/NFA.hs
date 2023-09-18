@@ -1,4 +1,7 @@
-module Automata.NFA (NFA (..), Alphabet (..), eval, makeCharNFA) where 
+module Automata.NFA (NFA (..), Alphabet (..), eval, makeCharNFA, makeTransition) where 
+
+import Data.Maybe
+import qualified Data.Map as M
 
 class Alphabet a where
   epsilon :: a
@@ -38,7 +41,12 @@ evaluateConfigs accept configs
   | any (evaluateConfig accept) configs = Success
   | otherwise = Continue
 
-makeCharNFA :: Eq state => state -> (state -> Char -> [state]) -> [state] -> NFA state Char
-makeCharNFA initial transition acceptStates = NFA initial transition (`elem` acceptStates) 
+makeCharNFA :: (Ord state) => state -> [((state, Char), [state])] -> [state] -> NFA state Char
+makeCharNFA initial valMap acceptStates = NFA initial (makeTransition valMap) (`elem` acceptStates) 
 
-
+makeTransition :: (Ord a, Ord b) => [((b, a), [b])] -> (b -> a -> [b])
+makeTransition triples = transition
+  where stateMap = M.fromList triples
+        transition state input = case M.lookup (state, input) stateMap of
+          (Just newState) -> newState
+          Nothing -> []

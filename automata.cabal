@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.1.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -34,6 +34,7 @@ library
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 executable automata-exe
@@ -46,6 +47,7 @@ executable automata-exe
   build-depends:
       automata
     , base >=4.7 && <5
+    , containers
   default-language: Haskell2010
 
 test-suite automata-test
@@ -59,4 +61,5 @@ test-suite automata-test
   build-depends:
       automata
     , base >=4.7 && <5
+    , containers
   default-language: Haskell2010
