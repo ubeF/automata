@@ -15,8 +15,7 @@ epsilonClosure :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> b -> S.Set b
 epsilonClosure transitions = go
   where eTransitions = filter (\(_,x,_) -> x==epsilon) transitions
         transFunc state = S.fromList . map (\(_,_,x) -> x) . filter (\(x,_,_) -> x==state) $ eTransitions
-        go state = S.union newStates (foldr (S.union . go) S.empty newStates)
-          where newStates = transFunc state
+        go state = S.unions . S.insert (S.singleton state) . S.map go . transFunc $ state
 
 expandState :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> a -> b -> S.Set b
 expandState transitions input state = S.union newStates closures
@@ -40,3 +39,16 @@ potentiateStates transitions start = (,,) <$> concatMap (replicate (length alpha
 -- epsilonClosure transition start = go start
 --   where go state = S.union newStates (foldr (S.union . go) S.empty newStates)
 --           where newStates = transition state epsilon
+
+testTransition :: [(Int, Char, Int)]
+testTransition = [
+    (0, epsilon, 1)
+  , (0, epsilon, 2)
+  , (1, 'b', 3)
+  , (2, 'a', 4)
+  , (3, 'a', 5)
+  , (4, 'b', 6)
+  , (5, epsilon, 7)
+  , (6, epsilon, 7)
+  , (7, epsilon, 0)
+  ]
