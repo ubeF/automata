@@ -1,7 +1,7 @@
-module Automata.NFA (NFA (..), Alphabet (..), eval, makeCharNFA, makeTransition) where 
+module Automata.NFA (NFA (..), Alphabet (..)) where 
 
-import Data.Maybe
-import qualified Data.Map as M
+import qualified Data.Set as S
+import Data.List
 
 class Alphabet a where
   epsilon :: a
@@ -9,44 +9,34 @@ class Alphabet a where
 instance Alphabet Char where
   epsilon = toEnum 0
 
-data NFA state input = NFA state (state -> input -> [state]) (state -> Bool)
+data NFA state input = NFA state [(state, input, state)] (state -> Bool)
 
-data Result = Success | Failure | Continue deriving (Show)
+epsilonClosure :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> b -> S.Set b
+epsilonClosure transitions = go
+  where eTransitions = filter (\(_,x,_) -> x==epsilon) transitions
+        transFunc state = S.fromList . map (\(_,_,x) -> x) . filter (\(x,_,_) -> x==state) $ eTransitions
+        go state = S.union newStates (foldr (S.union . go) S.empty newStates)
+          where newStates = transFunc state
 
-data Config state input = Config state [input]
+expandState :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> a -> b -> S.Set b
+expandState transitions input state = S.union newStates closures
+  where newStates = S.fromList . map (\(_,_,z) -> z) . filter (\(x,y,_) -> x==state && input==y) $ transitions
+        closures = foldr S.union S.empty . S.map (epsilonClosure transitions) $ newStates
 
-eval :: Alphabet b => NFA a b -> [b] -> Bool
-eval (NFA initial transition accept) vals = run [Config initial vals]
-  where run vals = case evaluateConfigs accept vals of
-                        Success -> True
-                        Failure -> False
-                        Continue -> run . concatMap (generateConfigs transition) $ vals
+expandSet :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> a -> S.Set b
+expandSet transitions states input = foldr S.union S.empty . S.map (expandState transitions input) $ states
 
-generateConfigs :: Alphabet a => (b -> a -> [b]) -> Config b a -> [Config b a]
-generateConfigs transition (Config state word) = configs <> epsilonConfigs
-  where gen input rest = zipWith Config (transition state input) (repeat rest)
-        configs 
-          | null word = []
-          | otherwise = gen (head word) (tail word)
-        epsilonConfigs = gen epsilon word
+potentiateStates :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> [(S.Set b, a, S.Set b)]
+potentiateStates transitions start = (,,) <$> concatMap (replicate (length alphabet)) a <*> alphabet <*> b
+  where alphabet = foldr (\(_,x,_) xs -> if x `elem` xs then xs else x:xs) [] transitions
+        (a, b) = go [] [] start
+        go done results states = foldr (\set (a,b) -> if set `elem` a then (a,b) else go a b set) (done ++ [states], newResults ++ results ) newResults
+          where newResults = zipWith (expandSet transitions) (repeat states) (cycle alphabet) 
 
-evaluateConfig :: (a -> Bool) -> Config a b -> Bool
-evaluateConfig accept (Config state word) 
-  | null word = accept state
-  | otherwise = False 
+-- toDFA :: NFA a b -> DFA.DFA Int b
+-- toDFA (NFA initial transition accept) = DFA.DFA newInitial newTransition newAccept
+--   where tmpInitial = epsilonClosure transition initial
 
-evaluateConfigs :: (a -> Bool) -> [Config a b] -> Result
-evaluateConfigs _ [] = Failure
-evaluateConfigs accept configs
-  | any (evaluateConfig accept) configs = Success
-  | otherwise = Continue
-
-makeCharNFA :: (Ord state) => state -> [((state, Char), [state])] -> [state] -> NFA state Char
-makeCharNFA initial valMap acceptStates = NFA initial (makeTransition valMap) (`elem` acceptStates) 
-
-makeTransition :: (Ord a, Ord b) => [((b, a), [b])] -> (b -> a -> [b])
-makeTransition triples = transition
-  where stateMap = M.fromList triples
-        transition state input = case M.lookup (state, input) stateMap of
-          (Just newState) -> newState
-          Nothing -> []
+-- epsilonClosure transition start = go start
+--   where go state = S.union newStates (foldr (S.union . go) S.empty newStates)
+--           where newStates = transition state epsilon
