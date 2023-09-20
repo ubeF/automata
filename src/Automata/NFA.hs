@@ -27,7 +27,7 @@ expandSet :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> a -> S.Set b
 expandSet transitions states input = foldr S.union S.empty . S.map (expandState transitions input) $ states
 
 potentiateStates :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> [(S.Set b, a, S.Set b)]
-potentiateStates transitions start = (,,) <$> concatMap (replicate (length alphabet)) a <*> alphabet <*> b
+potentiateStates transitions start = (,,) <$> concatMap (replicate (length alphabet)) a <*> cycle alphabet <*> b
   where alphabet = foldr (\(_,x,_) xs -> if x `elem` xs then xs else x:xs) [] transitions
         (a, b) = go [] [] start
         go done results states = foldr (\set (a,b) -> if set `elem` a then (a,b) else go a b set) (done ++ [states], newResults ++ results ) newResults
