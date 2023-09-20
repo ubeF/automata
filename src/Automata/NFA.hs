@@ -1,4 +1,4 @@
-module Automata.NFA (NFA (..), Alphabet (..)) where 
+module Automata.NFA (NFA (..), Alphabet (..)) where
 
 import qualified Data.Set as S
 import Data.List
@@ -26,10 +26,11 @@ expandSet :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> a -> S.Set b
 expandSet transitions states input = foldr S.union S.empty . S.map (expandState transitions input) $ states
 
 potentiateStates :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set b, a, S.Set b)]
-potentiateStates transitions alphabet start = (,,) <$> concatMap (replicate (length alphabet)) a <*> cycle alphabet <*> b
-  where (a, b) = go [] [] start
-        go done results states = foldr (\set (a,b) -> if set `elem` a then (a,b) else go a b set) (done ++ [states], newResults ++ results ) newResults
-          where newResults = zipWith (expandSet transitions) (repeat states) (cycle alphabet) 
+potentiateStates transitions alphabet = go []
+  where go trans states = go newTransitions (head . filter (not . (`elem` done)) $ queue)
+          where newResults = map (expandSet transitions states) alphabet
+                newTransitions = trans ++ zipWith ((,,) states) alphabet newResults
+                (done, _, queue) = unzip3 newTransitions
 
 -- toDFA :: NFA a b -> DFA.DFA Int b
 -- toDFA (NFA initial transition accept) = DFA.DFA newInitial newTransition newAccept
