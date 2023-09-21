@@ -31,8 +31,7 @@ potentiateStates transitions alphabet = go []
           x:_ -> go newTransitions x
           where newTransitions = trans ++ helper transitions alphabet state
                 (done, _, results) = unzip3 newTransitions
-                todo = S.toList (S.difference (S.fromList results) (S.fromList done))
-
+                todo = filter (not . (`elem` done)) results
 
 helper :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set b, a, S.Set b)] 
 helper transitions alphabet state = zipWith ((,,) state) alphabet results
