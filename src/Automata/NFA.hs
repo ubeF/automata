@@ -1,6 +1,8 @@
 module Automata.NFA (NFA (..), Alphabet (..)) where
 
 import qualified Data.Set as S
+import qualified Data.Map as M
+import Data.Maybe
 
 class Alphabet a where
   epsilon :: a
@@ -36,13 +38,17 @@ potentiateStates transitions alphabet = go []
 helper :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set b, a, S.Set b)] 
 helper transitions alphabet state = zipWith ((,,) state) alphabet results
   where results = map (expandSet transitions state) alphabet
+
+normalize :: Ord b => [(S.Set b, a, S.Set b)] -> [(Int, a, Int)]
+normalize transitions = zip3 indices alphabet (map (\x -> fromJust (M.lookup x dict)) vals)
+  where indices = [0..]
+        (keys, alphabet, vals) = unzip3 transitions
+        dict = M.fromList (zip keys indices)
+        
 -- toDFA :: NFA a b -> DFA.DFA Int b
 -- toDFA (NFA initial transition accept) = DFA.DFA newInitial newTransition newAccept
 --   where tmpInitial = epsilonClosure transition initial
 
--- epsilonClosure transition start = go start
---   where go state = S.union newStates (foldr (S.union . go) S.empty newStates)
---           where newStates = transition state epsilon
 
 testTransition :: [(Int, Char, Int)]
 testTransition = [
