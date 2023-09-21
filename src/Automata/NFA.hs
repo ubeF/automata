@@ -39,11 +39,12 @@ helper :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set 
 helper transitions alphabet state = zipWith ((,,) state) alphabet results
   where results = map (expandSet transitions state) alphabet
 
-normalize :: Ord b => [(S.Set b, a, S.Set b)] -> [(Int, a, Int)]
-normalize transitions = zip3 indices alphabet (map (\x -> fromJust (M.lookup x dict)) vals)
+normalize :: Ord b => S.Set b -> [(S.Set b, a, S.Set b)] -> [S.Set b] -> (Int, [(Int, a, Int)], [Int])
+normalize start transitions accept = (replace start, zip3 indices alphabet (map replace vals), map replace accept)
   where indices = [0..]
         (keys, alphabet, vals) = unzip3 transitions
         dict = M.fromList (zip keys indices)
+        replace x = fromJust (M.lookup x dict)
         
 -- toDFA :: NFA a b -> DFA.DFA Int b
 -- toDFA (NFA initial transition accept) = DFA.DFA newInitial newTransition newAccept
