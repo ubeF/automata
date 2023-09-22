@@ -1,9 +1,8 @@
-module Automata.NFA (NFA (..), Alphabet (..), toDFA) where
+module Automata.NFA (NFA (..), Alphabet (..), toDFA, eval) where
 
 import qualified Data.Set as S
 import qualified Automata.DFA as DFA
 import qualified Data.Map as M
-import Data.Maybe
 
 class Alphabet a where
   epsilon :: a
