@@ -1,8 +1,7 @@
-module Automata.NFA (NFA (..), Alphabet (..)) where
+module Automata.NFA (NFA (..), Alphabet (..), toDFA) where
 
 import qualified Data.Set as S
-import qualified Data.Map as M
-import Data.Maybe
+import qualified Automata.DFA as DFA
 
 class Alphabet a where
   epsilon :: a
@@ -10,7 +9,7 @@ class Alphabet a where
 instance Alphabet Char where
   epsilon = toEnum 0
 
-data NFA state input = NFA state [(state, input, state)] (state -> Bool)
+data NFA state input = NFA state [(state, input, state)] [state]
 
 epsilonClosure :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> b -> S.Set b
 epsilonClosure transitions = go
@@ -39,9 +38,12 @@ helper :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set 
 helper transitions alphabet state = zipWith ((,,) state) alphabet results
   where results = map (expandSet transitions state) alphabet
         
--- toDFA :: NFA a b -> DFA.DFA Int b
--- toDFA (NFA initial transition accept) = DFA.DFA newInitial newTransition newAccept
---   where tmpInitial = epsilonClosure transition initial
+toDFA :: (Ord a, Alphabet b, Eq b) => NFA a b -> [b] -> DFA.DFA Int b
+toDFA (NFA initial transitions accept) alphabet = DFA.normalize (DFA.DFA newInitial newTransitions newAccept) alphabet
+  where newInitial = epsilonClosure transitions initial
+        newTransitions = potentiateStates transitions alphabet newInitial
+        (newStates, _, _) = unzip3 newTransitions
+        newAccept = filter (any (`elem` accept)) . S.toList . S.fromList $ newStates
 
 
 testTransition :: [(Int, Char, Int)]
@@ -56,3 +58,5 @@ testTransition = [
   , (6, epsilon, 7)
   , (7, epsilon, 0)
   ]
+
+testNFA = NFA 0 testTransition [7]
