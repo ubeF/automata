@@ -1,6 +1,12 @@
-module Automata.DFA (DFA (..), eval) where 
+module Automata.DFA (DFA (..), eval) where
 
-data DFA state input = DFA state (state -> input -> state) (state -> Bool)
+import Data.Maybe
+import qualified Data.Map as M
 
-eval :: DFA a b -> [b] -> Bool
-eval (DFA initial trans acc) = acc . foldr (flip trans) initial
+data DFA state input = DFA state [(state, input, state)] [state]
+
+eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
+eval (DFA initial transition accept) vals = foldr trans initial vals `elem` accept
+  where trans input state = fromJust (M.lookup (state, input) valMap)
+        (states, inputs, results) = unzip3 transition
+        valMap = M.fromList (zip (zip states inputs) results)
