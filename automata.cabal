@@ -7,11 +7,11 @@ cabal-version: 1.12
 name:           automata
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/githubuser/automata#readme>
-homepage:       https://github.com/githubuser/automata#readme
-bug-reports:    https://github.com/githubuser/automata/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2023 Author name here
+homepage:       https://github.com/ubeF/automata#readme
+bug-reports:    https://github.com/ubeF/automata/issues
+author:         Felix Burkard
+maintainer:     Felix Burkard
+copyright:      2023 Felix Burkard
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -21,7 +21,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/automata
+  location: https://github.com/ubeF/automata
 
 library
   exposed-modules:
