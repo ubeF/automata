@@ -86,22 +86,3 @@ toDFA (NFA initial transitions accept) alphabet = DFA.normalize (DFA.DFA newInit
         newTransitions = potentiateStates transitions alphabet newInitial
         (newStates, _, _) = unzip3 newTransitions
         newAccept = filter (any (`elem` accept)) . S.toList . S.fromList $ newStates
-
-
--- Tests
-
-
-testTransition :: [(Int, Char, Int)]
-testTransition = [
-    (0, epsilon, 1)
-  , (0, epsilon, 2)
-  , (1, 'b', 3)
-  , (2, 'a', 4)
-  , (3, 'a', 5)
-  , (4, 'b', 6)
-  , (5, epsilon, 7)
-  , (6, epsilon, 7)
-  , (7, epsilon, 0)
-  ]
-
-testNFA = NFA 0 testTransition [7]
