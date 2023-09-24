@@ -41,17 +41,6 @@ library:
     - Automata.NFA
     - Automata.DFA
 
-executables:
-  automata-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - automata
-
 tests:
   automata-test:
     main:                Spec.hs
