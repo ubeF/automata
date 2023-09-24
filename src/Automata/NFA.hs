@@ -10,14 +10,14 @@ class Alphabet a where
 instance Alphabet Char where
   epsilon = toEnum 0
 
-data NFA state input = NFA state [(state, input, state)] [state]
+data NFA state input = NFA state [(state, input, state)] [state] [input]
 
 data Result = Success | Failure | Continue deriving (Show)
 
 data Config state input = Config state [input]
 
 eval :: (Ord a, Ord b, Alphabet b) => NFA a b -> [b] -> Bool
-eval (NFA initial transitions accept) vals = run [Config initial vals]
+eval (NFA initial transitions accept _) input = run [Config initial input]
   where run vals = case evaluateConfigs (`elem` accept) vals of
                         Success -> True
                         Failure -> False
@@ -28,7 +28,7 @@ eval (NFA initial transitions accept) vals = run [Config initial vals]
 
 generateConfigs :: Alphabet a => (b -> a -> [b]) -> Config b a -> [Config b a]
 generateConfigs transition (Config state word) = configs <> epsilonConfigs
-  where gen input rest = zipWith Config (transition state input) (repeat rest)
+  where gen input rest = map (`Config` rest) (transition state input)
         configs
           | null word = []
           | otherwise = gen (head word) (tail word)
@@ -80,8 +80,8 @@ helper :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set 
 helper transitions alphabet state = zipWith ((,,) state) alphabet results
   where results = map (expandSet transitions state) alphabet
 
-toDFA :: (Ord a, Alphabet b, Eq b) => NFA a b -> [b] -> DFA.DFA Int b
-toDFA (NFA initial transitions accept) alphabet = DFA.normalize (DFA.DFA newInitial newTransitions newAccept) alphabet
+toDFA :: (Ord a, Alphabet b, Eq b) => NFA a b -> DFA.DFA Int b
+toDFA (NFA initial transitions accept alphabet) = DFA.normalize (DFA.DFA  newInitial newTransitions newAccept alphabet)
   where newInitial = epsilonClosure transitions initial
         newTransitions = potentiateStates transitions alphabet newInitial
         (newStates, _, _) = unzip3 newTransitions

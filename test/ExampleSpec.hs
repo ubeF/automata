@@ -18,10 +18,10 @@ testTransition = [
   ]
 
 testNFA :: NFA Int Char
-testNFA = NFA 0 testTransition [7]
+testNFA = NFA 0 testTransition [7] "ab"
 
 testDFA :: DFA.DFA Int Char
-testDFA = toDFA testNFA "ab"
+testDFA = toDFA testNFA
 
 spec :: Spec
 spec = do 

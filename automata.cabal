@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           automata
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/automata#readme>
+description:    Please see the README on GitHub at <https://github.com/ubeF/automata#readme>
 homepage:       https://github.com/ubeF/automata#readme
 bug-reports:    https://github.com/ubeF/automata/issues
 author:         Felix Burkard
