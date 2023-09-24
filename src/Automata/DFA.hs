@@ -17,13 +17,6 @@ normalize (DFA initial transitions accept alphabet) = DFA (replace initial) (zip
         dict = M.fromList (zip states indices)
         replace x = fromJust (M.lookup x dict)
 
-minimize :: DFA a b -> DFA Int b
-minimize = undefined
-
--- findMergableStates :: DFA a b -> S.Set (S.Set a)
--- findMergableStates (DFA intial transitions accept alphabet) = undefined
---   where pairs = S.cartesianProduct (getStates )
-
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction (DFA _ transitions _ _) = func
   where func state input = fromJust (M.lookup (state, input) transMap)
