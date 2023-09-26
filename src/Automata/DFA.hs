@@ -19,14 +19,32 @@ normalize (DFA initial transitions accept alphabet) = DFA (replace initial) (zip
         dict = M.fromList (zip states indices)
         replace x = fromJust (M.lookup x dict)
 
-minimize :: DFA a b -> DFA Int b
-minimize = undefined
+minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
+minimize dfa = normalize . mergeStates dfa. findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
-necessarilyDistinctStates :: (Ord a) => DFA a b -> S.Set (S.Set a)
-necessarilyDistinctStates dfa = S.difference (S.difference (cartesianProduct states) (cartesianProduct nonAcceptingStates)) (cartesianProduct acceptingStates)
+findNecessarilyDistinctPairs :: (Ord a) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a))
+findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
   where states = getStates dfa
         acceptingStates = getAcceptStates dfa
         nonAcceptingStates = S.difference states acceptingStates
+        potentialPairs = S.union (cartesianProduct acceptingStates) (cartesianProduct nonAcceptingStates)
+        distinctPairs = S.difference (cartesianProduct states) potentialPairs
+
+findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
+findNonDistinctPairs dfa (potential, distinct)
+  | S.null newDistinct = potential
+  | otherwise = findNonDistinctPairs dfa (S.difference potential newDistinct, S.union distinct newDistinct)
+  where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (getAlphabet dfa)) potential
+        transition = flip . getTransitionFunction $ dfa
+        transitionSet set input = S.map (transition input) set 
+        bulkTransitionSet inputs set = map (transitionSet set) inputs
+
+mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
+mergeStates (DFA initial transitions accept alphabet) pairs = DFA (transform initial) newTransitions (map transform accept) alphabet
+  where transform x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
+        (states, inputs, results) = unzip3 transitions
+        newTransitions = zip3 (map transform states) inputs (map transform results)
+
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction (DFA _ transitions _ _) = func
@@ -46,6 +64,9 @@ getAcceptStates (DFA _ _ accept _) = S.fromList accept
 getStates :: (Ord a) => DFA a b -> S.Set a
 getStates (DFA _ transitions _ _) = S.fromList states
   where (states, _, _) = unzip3 transitions
+
+getAlphabet :: DFA a b -> [b]
+getAlphabet (DFA _ _ _ alphabet) = alphabet
 
 cartesianProduct :: (Ord a) => S.Set a -> S.Set (S.Set a)
 cartesianProduct set = S.map tupleToSet (S.cartesianProduct set set)
