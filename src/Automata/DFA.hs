@@ -1,4 +1,4 @@
-module Automata.DFA (DFA (..), eval, normalize) where
+module Automata.DFA (DFA (..), eval, normalize, minimize) where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -20,7 +20,7 @@ normalize (DFA initial transitions accept alphabet) = DFA (replace initial) (zip
         replace x = fromJust (M.lookup x dict)
 
 minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
-minimize dfa = normalize . mergeStates dfa. findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
+minimize dfa = normalize . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
 findNecessarilyDistinctPairs :: (Ord a) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a))
 findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
@@ -39,11 +39,11 @@ findNonDistinctPairs dfa (potential, distinct)
         transitionSet set input = S.map (transition input) set 
         bulkTransitionSet inputs set = map (transitionSet set) inputs
 
-mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
-mergeStates (DFA initial transitions accept alphabet) pairs = DFA (transform initial) newTransitions (map transform accept) alphabet
+mergeStates :: (Ord a, Ord b) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
+mergeStates (DFA initial transitions accept alphabet) pairs = DFA (transform initial) newTransitions (removeDuplicates . map transform $ accept) alphabet
   where transform x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
         (states, inputs, results) = unzip3 transitions
-        newTransitions = zip3 (map transform states) inputs (map transform results)
+        newTransitions = removeDuplicates (zip3 (map transform states) inputs (map transform results))
 
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
@@ -71,3 +71,6 @@ getAlphabet (DFA _ _ _ alphabet) = alphabet
 cartesianProduct :: (Ord a) => S.Set a -> S.Set (S.Set a)
 cartesianProduct set = S.map tupleToSet (S.cartesianProduct set set)
   where tupleToSet (a, b) = S.fromList [a, b] 
+
+removeDuplicates :: (Ord a) => [a] -> [a]
+removeDuplicates = S.toList . S.fromList
