@@ -14,5 +14,5 @@ Currently implemented features:
   - Conversion from NFAs to DFAs
 
 Currently planned features:
-  - [ ] Minimization of DFAs
+  - [x] Minimization of DFAs
   - [ ] Automatic creation of NFAs from Regular Expressions
