@@ -3,9 +3,30 @@ module Automata.DFA (DFA (..), eval, normalize, minimize) where
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
-import qualified Data.Set as S
 
 data DFA state input = DFA state [(state, input, state)] [state] [input] deriving (Show)
+
+getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
+getTransitionFunction (DFA _ transitions _ _) = func
+  where func state input = fromJust (M.lookup (state, input) transMap)
+        (states, inputs, results) = unzip3 transitions
+        transMap = M.fromList (zip (zip states inputs) results)
+
+getInitial :: DFA a b -> a
+getInitial (DFA initial _ _ _) = initial
+
+getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
+getAcceptFunction (DFA _ _ accept _) = (`elem` accept)
+
+getAcceptStates :: (Ord a) => DFA a b -> S.Set a
+getAcceptStates (DFA _ _ accept _) = S.fromList accept
+
+getStates :: (Ord a) => DFA a b -> S.Set a
+getStates (DFA _ transitions _ _) = S.fromList states
+  where (states, _, _) = unzip3 transitions
+
+getAlphabet :: DFA a b -> [b]
+getAlphabet (DFA _ _ _ alphabet) = alphabet
 
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
 eval dfa = getAcceptFunction dfa . foldr transFunc (getInitial dfa)
@@ -43,29 +64,6 @@ mergeStates (DFA initial transitions accept alphabet) pairs = DFA (transform ini
   where transform x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
         (states, inputs, results) = unzip3 transitions
         newTransitions = removeDuplicates (zip3 (map transform states) inputs (map transform results))
-
-
-getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
-getTransitionFunction (DFA _ transitions _ _) = func
-  where func state input = fromJust (M.lookup (state, input) transMap)
-        (states, inputs, results) = unzip3 transitions
-        transMap = M.fromList (zip (zip states inputs) results)
-
-getInitial :: DFA a b -> a
-getInitial (DFA initial _ _ _) = initial
-
-getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
-getAcceptFunction (DFA _ _ accept _) = (`elem` accept)
-
-getAcceptStates :: (Ord a) => DFA a b -> S.Set a
-getAcceptStates (DFA _ _ accept _) = S.fromList accept
-
-getStates :: (Ord a) => DFA a b -> S.Set a
-getStates (DFA _ transitions _ _) = S.fromList states
-  where (states, _, _) = unzip3 transitions
-
-getAlphabet :: DFA a b -> [b]
-getAlphabet (DFA _ _ _ alphabet) = alphabet
 
 cartesianProduct :: (Ord a) => S.Set a -> S.Set (S.Set a)
 cartesianProduct set = S.map tupleToSet (S.cartesianProduct set set)

@@ -12,31 +12,38 @@ instance Alphabet Char where
 
 data NFA state input = NFA state [(state, input, state)] [state] [input]
 
+type Transition state input = state -> input -> [state]
+
+getTransitionFunction:: (Ord state, Ord input) => NFA state input -> Transition state input
+getTransitionFunction (NFA _ transitions _ _) = function
+  where (states, inputs, _) = unzip3 transitions
+        resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions) states inputs
+        valMap = M.fromList (zip (zip states inputs) resultLists)
+        function state input = case M.lookup (state, input) valMap of
+          Nothing -> []
+          (Just val) -> val
+
+getAcceptFunction :: (Eq state) => NFA state input -> (state -> Bool)
+getAcceptFunction (NFA _ _ accept _) = (`elem` accept)
+
+getInitial :: NFA state input -> state
+getInitial (NFA x _ _ _) = x
+
+getAlphabet :: NFA state input -> [input]
+getAlphabet (NFA _ _ _ xs) = xs
+
 data Result = Success | Failure | Continue deriving (Show)
 
 data Config state input = Config state [input]
 
--- Evaluation of NFAs
-
-eval :: (Ord a, Ord b, Alphabet b) => NFA a b -> [b] -> Bool
-eval (NFA initial transitions accept _) input = run [Config initial input]
-  where run vals = case evaluateConfigs (`elem` accept) vals of
+eval :: (Ord state, Ord input, Alphabet input) => NFA state input -> [input] -> Bool
+eval nfa input = run [Config (getInitial nfa) input]
+  where run vals = case evaluateConfigs (getAcceptFunction nfa) vals of
                         Success -> True
                         Failure -> False
-                        Continue -> run . concatMap (generateConfigs transFunc) $ vals
-                          where transFunc = makeFunction (zip3 states inputs resultLists)
-                                (states, inputs, _) = unzip3 transitions
-                                resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions) states inputs
+                        Continue -> run . concatMap (generateConfigs . getTransitionFunction $ nfa) $ vals
 
-makeFunction :: (Ord a, Ord b) => [(a, b, [a])] -> (a -> b -> [a])
-makeFunction tuples = function
-  where funcMap = M.fromList ( zip (zip keys1 keys2) vals)
-        (keys1, keys2, vals) = unzip3 tuples
-        function a b = case M.lookup (a,b) funcMap of
-          Nothing -> []
-          (Just val) -> val
-
-generateConfigs :: Alphabet a => (b -> a -> [b]) -> Config b a -> [Config b a]
+generateConfigs :: Alphabet input => Transition state input -> Config state input -> [Config state input]
 generateConfigs transition (Config state word) = configs <> epsilonConfigs
   where gen input rest = map (`Config` rest) (transition state input)
         configs
@@ -44,49 +51,43 @@ generateConfigs transition (Config state word) = configs <> epsilonConfigs
           | otherwise = gen (head word) (tail word)
         epsilonConfigs = gen epsilon word
 
-evaluateConfigs :: (a -> Bool) -> [Config a b] -> Result
+evaluateConfigs :: (state -> Bool) -> [Config state input] -> Result
 evaluateConfigs _ [] = Failure
 evaluateConfigs accept configs
   | any (evaluateConfig accept) configs = Success
   | otherwise = Continue
 
-evaluateConfig :: (a -> Bool) -> Config a b -> Bool
+evaluateConfig :: (state -> Bool) -> Config state input -> Bool
 evaluateConfig accept (Config state word)
   | null word = accept state
   | otherwise = False
 
--- Conversion from NFAs to DFAs
-
-toDFA :: (Ord a, Alphabet b, Eq b) => NFA a b -> DFA.DFA Int b
-toDFA (NFA initial transitions accept alphabet) = DFA.normalize (DFA.DFA  newInitial newTransitions newAccept alphabet)
-  where newInitial = epsilonClosure transitions initial
-        newTransitions = potentiateStates transitions alphabet newInitial
+toDFA :: (Ord state, Alphabet input, Ord input) => NFA state input -> DFA.DFA Int input
+toDFA nfa = DFA.normalize (DFA.DFA  newInitial newTransitions newAccept alphabet)
+  where alphabet = getAlphabet nfa
+        transition = getTransitionFunction nfa
+        newInitial = epsilonClosure transition (getInitial nfa)
+        newTransitions = potentiateStates transition alphabet newInitial
         (newStates, _, _) = unzip3 newTransitions
-        newAccept = filter (any (`elem` accept)) . S.toList . S.fromList $ newStates
+        newAccept = filter (any (getAcceptFunction nfa)) . S.toList . S.fromList $ newStates
 
-epsilonClosure :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> b -> S.Set b
-epsilonClosure transitions = go
-  where eTransitions = filter (\(_,x,_) -> x==epsilon) transitions
-        transFunc state = S.fromList . map (\(_,_,x) -> x) . filter (\(x,_,_) -> x==state) $ eTransitions
-        go state = S.unions . S.insert (S.singleton state) . S.map go . transFunc $ state
+epsilonClosure :: (Alphabet input, Eq input, Ord state) => Transition state input -> state -> S.Set state
+epsilonClosure transition state = S.unions . S.insert (S.singleton state) . S.map (epsilonClosure transition) . S.fromList $ transition state epsilon
 
-potentiateStates :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set b, a, S.Set b)]
-potentiateStates transitions alphabet = go []
+potentiateStates :: (Ord state, Alphabet input, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
+potentiateStates transition alphabet = go []
   where go trans state = case todo of
           [] -> newTransitions
           x:_ -> go newTransitions x
-          where newTransitions = trans ++ makeTransitions transitions alphabet state
+          where newTransitions = trans ++ makeTransitions transition alphabet state
                 (done, _, results) = unzip3 newTransitions
                 todo = filter (not . (`elem` done)) results
 
-makeTransitions :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> [a] -> S.Set b -> [(S.Set b, a, S.Set b)]
-makeTransitions transitions alphabet state = zipWith ((,,) state) alphabet results
-  where results = map (expandSet transitions state) alphabet
+makeTransitions :: (Ord state, Alphabet input, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
+makeTransitions transition alphabet states = zipWith ((,,) states) alphabet results
+  where results = map (transitionSet transition states) alphabet
 
-expandState :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> a -> b -> S.Set b
-expandState transitions input state = S.union newStates closures
-  where newStates = S.fromList . map (\(_,_,z) -> z) . filter (\(x,y,_) -> x==state && input==y) $ transitions
-        closures = foldr S.union S.empty . S.map (epsilonClosure transitions) $ newStates
-
-expandSet :: (Alphabet a, Eq a, Ord b) => [(b, a, b)] -> S.Set b -> a -> S.Set b
-expandSet transitions states input = foldr S.union S.empty . S.map (expandState transitions input) $ states
+transitionSet :: (Ord state, Alphabet input, Eq input) => Transition state input -> S.Set state -> input -> S.Set state
+transitionSet transition states input = S.union newStates closure
+  where newStates = S.unions . S.map S.fromList . S.map (`transition` input) $ states
+        closure = S.unions . S.map (epsilonClosure transition) $ newStates
