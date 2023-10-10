@@ -1,4 +1,4 @@
-module Automata.NFA (NFA (..), Alphabet (..), toDFA, eval) where
+module Automata.NFA (NFA (..), Alphabet (..), toDFA, eval, getInitial, getAcceptStates) where
 
 import qualified Data.Set as S
 import qualified Automata.DFA as DFA
@@ -10,7 +10,7 @@ class Alphabet a where
 instance Alphabet Char where
   epsilon = toEnum 0
 
-data NFA state input = NFA state [(state, input, state)] [state] [input]
+data NFA state input = NFA state [(state, input, state)] [state] [input] deriving (Show)
 
 type Transition state input = state -> input -> [state]
 
@@ -25,6 +25,9 @@ getTransitionFunction (NFA _ transitions _ _) = function
 
 getAcceptFunction :: (Eq state) => NFA state input -> (state -> Bool)
 getAcceptFunction (NFA _ _ accept _) = (`elem` accept)
+
+getAcceptStates :: NFA state input -> [state]
+getAcceptStates (NFA _ _ x _) = x
 
 getInitial :: NFA state input -> state
 getInitial (NFA x _ _ _) = x

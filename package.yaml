@@ -33,6 +33,7 @@ library:
   exposed-modules:
     - Automata.NFA
     - Automata.DFA
+    - Automata.Operators
 
 tests:
   automata-test:

@@ -27,6 +27,7 @@ library
   exposed-modules:
       Automata.NFA
       Automata.DFA
+      Automata.Operators
   other-modules:
       Paths_automata
   hs-source-dirs:
