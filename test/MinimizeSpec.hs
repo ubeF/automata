@@ -19,8 +19,8 @@ instance Arbitrary MinimizeSpec.Word where
 prop_sameResult :: DFA Int Char -> MinimizeSpec.Word -> Bool
 prop_sameResult dfa (Word word) = eval dfa word == eval (minimize dfa) word
 
-transitions :: [(Int, Char, Int)]
-transitions = [
+testTransitions :: [(Int, Char, Int)]
+testTransitions = [
     (0, 'a', 1)
   , (0, 'b', 2)
   , (1, 'a', 3)
@@ -34,7 +34,7 @@ transitions = [
   ]
 
 dfa :: DFA Int Char
-dfa = DFA 0 transitions [3,4] "ab"
+dfa = DFA [0..4] "ab" testTransitions 0 [3,4]
 
 spec :: Spec
 spec = do

@@ -1,73 +1,106 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run) where
 
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Data.List as L
 
-data DFA state input = DFA state [(state, input, state)] [state] [input] deriving (Show)
+data DFA a b = DFA {
+    states :: [a]
+  , alphabet :: [b]
+  , transitions :: [(a, b, a)]
+  , initial :: a
+  , accept :: [a]
+}
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
-getTransitionFunction (DFA _ transitions _ _) = func
+getTransitionFunction dfa = func
   where func state input = fromJust (M.lookup (state, input) transMap)
-        (states, inputs, results) = unzip3 transitions
-        transMap = M.fromList (zip (zip states inputs) results)
-
-getInitial :: DFA a b -> a
-getInitial (DFA initial _ _ _) = initial
+        (stateInputs, inputs, results) = unzip3 $ transitions dfa
+        transMap = M.fromList (zip (zip stateInputs inputs) results)
 
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
-getAcceptFunction (DFA _ _ accept _) = (`elem` accept)
-
-getAcceptStates :: (Ord a) => DFA a b -> S.Set a
-getAcceptStates (DFA _ _ accept _) = S.fromList accept
-
-getStates :: (Ord a) => DFA a b -> S.Set a
-getStates (DFA _ transitions _ _) = S.fromList states
-  where (states, _, _) = unzip3 transitions
-
-getAlphabet :: DFA a b -> [b]
-getAlphabet (DFA _ _ _ alphabet) = alphabet
+getAcceptFunction dfa = (`elem` accept dfa)
 
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
-eval dfa = getAcceptFunction dfa . foldr transFunc (getInitial dfa)
-  where transFunc = flip . getTransitionFunction $ dfa
+eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs 
+
+run :: (Ord a, Ord b) => DFA a b -> [b] -> DFA a b
+run dfa [] = dfa
+run dfa (x:xs) = run dfa {initial=newState} xs
+  where newState = (getTransitionFunction dfa) (initial dfa) x
+
+transformStates :: (a -> b) -> DFA a c -> DFA b c
+transformStates f dfa = dfa { 
+      states=newStates
+    , initial=newInitial
+    , accept=newAccept
+    , transitions=newTransitions 
+    }
+  where newInitial = f . initial $ dfa
+        newStates = map f. states $ dfa
+        newAccept = map f . accept $ dfa
+        (a, b, c) = unzip3 . transitions $ dfa
+        newTransitions = zip3 (map f a) b (map f c)
 
 normalize :: (Ord a) => DFA a b -> DFA Int b
-normalize (DFA initial transitions accept alphabet) = DFA (replace initial) (zip3 indices inputs (map replace results)) (map replace accept) alphabet
-  where indices = concatMap (replicate (length alphabet)) [0..]
-        (states, inputs, results) = unzip3 transitions
-        dict = M.fromList (zip states indices)
-        replace x = fromJust (M.lookup x dict)
+normalize dfa = transformStates func dfa
+  where valMap = M.fromList $ zip (states dfa) [1..]
+        func x = fromJust $ M.lookup x valMap
 
 minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
-minimize dfa = normalize . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
+minimize dfa = removeDuplicateStates . normalize . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
 findNecessarilyDistinctPairs :: (Ord a) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a))
 findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
-  where states = getStates dfa
-        acceptingStates = getAcceptStates dfa
-        nonAcceptingStates = S.difference states acceptingStates
+  where allStates = S.fromList . states $ dfa
+        acceptingStates = S.fromList . accept $ dfa
+        nonAcceptingStates = S.difference allStates acceptingStates
         potentialPairs = S.union (cartesianProduct acceptingStates) (cartesianProduct nonAcceptingStates)
-        distinctPairs = S.difference (cartesianProduct states) potentialPairs
+        distinctPairs = S.difference (cartesianProduct allStates) potentialPairs
 
 findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
 findNonDistinctPairs dfa (potential, distinct)
   | S.null newDistinct = potential
   | otherwise = findNonDistinctPairs dfa (S.difference potential newDistinct, S.union distinct newDistinct)
-  where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (getAlphabet dfa)) potential
+  where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
         transition = flip . getTransitionFunction $ dfa
-        transitionSet set input = S.map (transition input) set 
+        transitionSet set input = S.map (transition input) set
         bulkTransitionSet inputs set = map (transitionSet set) inputs
 
-mergeStates :: (Ord a, Ord b) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
-mergeStates (DFA initial transitions accept alphabet) pairs = DFA (transform initial) newTransitions (removeDuplicates . map transform $ accept) alphabet
-  where transform x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
-        (states, inputs, results) = unzip3 transitions
-        newTransitions = removeDuplicates (zip3 (map transform states) inputs (map transform results))
+mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
+mergeStates dfa pairs = transformStates f dfa
+  where f x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
 
 cartesianProduct :: (Ord a) => S.Set a -> S.Set (S.Set a)
 cartesianProduct set = S.map tupleToSet (S.cartesianProduct set set)
-  where tupleToSet (a, b) = S.fromList [a, b] 
+  where tupleToSet (a, b) = S.fromList [a, b]
+
+removeDuplicateStates :: (Ord a, Ord b) => DFA a b -> DFA a b
+removeDuplicateStates dfa = dfa { accept=newAccept, states=newStates, transitions=newTransitions }
+  where newStates = removeDuplicates . states $ dfa
+        newAccept = removeDuplicates . accept $ dfa
+        newTransitions = removeDuplicates . transitions $ dfa
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = S.toList . S.fromList
+
+instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
+  show dfa = L.intercalate "\n" $ header : rows
+    where inputWidth = maximum . map length . map show . alphabet $ dfa
+          stateWidth = maximum . map length . map show . states $ dfa
+          header = L.intercalate " | " [
+              "   "
+            , padRight stateWidth ""
+            , (unwords . map (padRight inputWidth) . map show . alphabet $ dfa)
+            ]
+          rows = map makeRow . states $ dfa
+          makeRow x = L.intercalate " | " [
+              mconcat [if getAcceptFunction dfa x then "*" else " ", " ", if x == initial dfa then ">" else " "]
+            , padRight stateWidth . show $ x  
+            , unwords . map (padRight inputWidth) . map show $ map (getTransitionFunction dfa x) (alphabet dfa)
+            ]
+
+padRight :: Int -> String -> String
+padRight len str = max str padded
+  where padded = take len $ str <> repeat ' '
