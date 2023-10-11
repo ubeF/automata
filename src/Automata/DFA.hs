@@ -1,8 +1,9 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, eval) where
 
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
+import qualified Data.List as L
 
 data DFA a b = DFA {
     states :: [a]
@@ -11,6 +12,16 @@ data DFA a b = DFA {
   , initial :: a
   , accept :: [a]
 }
+
+instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
+  show dfa = L.intercalate "\n" $ header : rows
+    where header = "    |   | " <> (unwords . map show . alphabet $ dfa)
+          rows = map makeRow . states $ dfa
+          makeRow x = L.intercalate " | " [
+              mconcat [if getAcceptFunction dfa x then "*" else " ", " ", if x == initial dfa then ">" else " "]
+            , show x  
+            , unwords . map show $ map (getTransitionFunction dfa x) (alphabet dfa)
+            ]
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
@@ -22,8 +33,12 @@ getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
 
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
-eval dfa = getAcceptFunction dfa . foldr transFunc (initial dfa)
-  where transFunc = flip . getTransitionFunction $ dfa
+eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs 
+
+run :: (Ord a, Ord b) => DFA a b -> [b] -> DFA a b
+run dfa [] = dfa
+run dfa (x:xs) = run dfa {initial=newState} xs
+  where newState = (getTransitionFunction dfa) (initial dfa) x
 
 transformStates :: (a -> b) -> DFA a c -> DFA b c
 transformStates f dfa = dfa { 
