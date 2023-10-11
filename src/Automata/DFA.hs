@@ -1,4 +1,4 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, eval) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run) where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -12,16 +12,6 @@ data DFA a b = DFA {
   , initial :: a
   , accept :: [a]
 }
-
-instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
-  show dfa = L.intercalate "\n" $ header : rows
-    where header = "    |   | " <> (unwords . map show . alphabet $ dfa)
-          rows = map makeRow . states $ dfa
-          makeRow x = L.intercalate " | " [
-              mconcat [if getAcceptFunction dfa x then "*" else " ", " ", if x == initial dfa then ">" else " "]
-            , show x  
-            , unwords . map show $ map (getTransitionFunction dfa x) (alphabet dfa)
-            ]
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
@@ -94,3 +84,23 @@ removeDuplicateStates dfa = dfa { accept=newAccept, states=newStates, transition
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = S.toList . S.fromList
+
+instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
+  show dfa = L.intercalate "\n" $ header : rows
+    where inputWidth = maximum . map length . map show . alphabet $ dfa
+          stateWidth = maximum . map length . map show . states $ dfa
+          header = L.intercalate " | " [
+              "   "
+            , padRight stateWidth ""
+            , (unwords . map (padRight inputWidth) . map show . alphabet $ dfa)
+            ]
+          rows = map makeRow . states $ dfa
+          makeRow x = L.intercalate " | " [
+              mconcat [if getAcceptFunction dfa x then "*" else " ", " ", if x == initial dfa then ">" else " "]
+            , padRight stateWidth . show $ x  
+            , unwords . map (padRight inputWidth) . map show $ map (getTransitionFunction dfa x) (alphabet dfa)
+            ]
+
+padRight :: Int -> String -> String
+padRight len str = max str padded
+  where padded = take len $ str <> repeat ' '
