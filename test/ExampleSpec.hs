@@ -17,8 +17,11 @@ testTransition = [
   , (7, epsilon, 0)
   ]
 
+-- testNFA :: NFA Int Char
+-- testNFA = NFA 0 testTransition [7] "ab"
+
 testNFA :: NFA Int Char
-testNFA = NFA 0 testTransition [7] "ab"
+testNFA = NFA [0..7] "ab" testTransition 0 [7]
 
 testDFA :: DFA.DFA Int Char
 testDFA = toDFA testNFA
