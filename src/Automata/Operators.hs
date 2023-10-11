@@ -14,15 +14,6 @@ or nfa1 nfa2 = normalize $ Automata.Operators._or nfa1 nfa2
 kleene :: (Ord state, Alphabet input) => NFA state input -> NFA Int input
 kleene = normalize . _kleene
 
--- _concat :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
--- _concat nfa1 nfa2 = NFA initialA newTransitions acceptB newAlphabet
---   where nfaA = transformStates A nfa1
---         nfaB = transformStates B nfa2
---         newAlphabet = S.toList $ S.union (S.fromList alphabetA) (S.fromList alphabetB)
---         newTransitions = transitionsA <> 
---                          transitionsB <> 
---                          map (\x -> (x , epsilon, initialB)) acceptA
-
 _concat :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
 _concat nfa1 nfa2 = NFA {
     states = newStates
@@ -38,19 +29,6 @@ _concat nfa1 nfa2 = NFA {
         newTransitions = transitions nfaA <> 
                          transitions nfaB <> 
                          map (\x -> (x , epsilon, initial nfaB)) (accept nfaA)
-
--- _or :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
--- _or nfa1 nfa2 = NFA newInitial newTransitions [newAccept] newAlphabet
---   where (NFA initialA transitionsA acceptA alphabetA) = transformStates A nfa1
---         (NFA initialB transitionsB acceptB alphabetB) = transformStates B nfa2
---         newAlphabet = S.toList $ S.union (S.fromList alphabetA) (S.fromList alphabetB)
---         newInitial = New . getInitial $ nfa1
---         newAccept = New . head . getAcceptStates $ nfa1
---         newTransitions = transitionsA <> 
---                          transitionsB <> 
---                          [(newInitial, epsilon, initialA), (newInitial, epsilon, initialB)] <>
---                          map (\x -> (x , epsilon, newAccept)) acceptA <>
---                          map (\x -> (x , epsilon, newAccept)) acceptB
 
 _or :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
 _or nfa1 nfa2 = NFA {
@@ -71,16 +49,6 @@ _or nfa1 nfa2 = NFA {
                          [(newInitial, epsilon, initial nfaA), (newInitial, epsilon, initial nfaB)] <>
                          map (\x -> (x , epsilon, newAccept)) (accept nfaA) <> 
                          map (\x -> (x , epsilon, newAccept)) (accept nfaB)
-
--- _kleene :: (Alphabet input) => NFA state input -> NFA (Marker state) input
--- _kleene nfa = NFA newInitial newTransitions [newAccept] alphabet
---   where nfaA = transformStates A nfa
---         newInitial = New . getInitial $ nfa
---         newAccept = New . head . getAcceptStates $ nfa
---         newTransitions = transitions <> 
---                          [(newInitial, epsilon, initial), (newInitial, epsilon, newAccept)] <> 
---                          map (\x -> (x , epsilon, newAccept)) accept <>
---                          map (\x -> (x , epsilon, initial)) accept
 
 _kleene :: (Alphabet input) => NFA state input -> NFA (Marker state) input
 _kleene nfa = NFA {
