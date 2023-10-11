@@ -12,6 +12,7 @@ Currently implemented features:
   - Creation of Non-deterministic Finite Automata (NFA)
   - Evaluation of NFAs
   - Conversion from NFAs to DFAs
+  - Operators and Generators for NFAs
 
 Currently planned features:
   - [x] Minimization of DFAs
