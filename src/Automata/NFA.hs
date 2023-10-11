@@ -41,9 +41,9 @@ type Transition state input = state -> input -> [state]
 
 getTransitionFunction:: (Ord state, Ord input) => NFA state input -> Transition state input
 getTransitionFunction nfa = function
-  where (states, inputs, _) = unzip3 . transitions $ nfa
-        resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions nfa) states inputs
-        valMap = M.fromList (zip (zip states inputs) resultLists)
+  where (stateInputs, inputs, _) = unzip3 . transitions $ nfa
+        resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions nfa) stateInputs inputs
+        valMap = M.fromList (zip (zip stateInputs inputs) resultLists)
         function state input = case M.lookup (state, input) valMap of
           Nothing -> []
           (Just val) -> val
@@ -72,13 +72,13 @@ generateConfigs transition (Config state word) = configs <> epsilonConfigs
 
 evaluateConfigs :: (state -> Bool) -> [Config state input] -> Result
 evaluateConfigs _ [] = Failure
-evaluateConfigs accept configs
-  | any (evaluateConfig accept) configs = Success
+evaluateConfigs acc configs
+  | any (evaluateConfig acc) configs = Success
   | otherwise = Continue
 
 evaluateConfig :: (state -> Bool) -> Config state input -> Bool
-evaluateConfig accept (Config state word)
-  | null word = accept state
+evaluateConfig acc (Config state word)
+  | null word = acc state
   | otherwise = False
 
 toDFA :: (Ord state, Alphabet input, Ord input) => NFA state input -> DFA.DFA Int input
@@ -94,19 +94,19 @@ epsilonClosure :: (Alphabet input, Eq input, Ord state) => Transition state inpu
 epsilonClosure transition state = S.unions . S.insert (S.singleton state) . S.map (epsilonClosure transition) . S.fromList $ transition state epsilon
 
 potentiateStates :: (Ord state, Alphabet input, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
-potentiateStates transition alphabet = go []
+potentiateStates transition alphabetVals = go []
   where go trans state = case todo of
           [] -> newTransitions
           x:_ -> go newTransitions x
-          where newTransitions = trans ++ makeTransitions transition alphabet state
+          where newTransitions = trans ++ makeTransitions transition alphabetVals state
                 (done, _, results) = unzip3 newTransitions
                 todo = filter (not . (`elem` done)) results
 
 makeTransitions :: (Ord state, Alphabet input, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
-makeTransitions transition alphabet states = zipWith ((,,) states) alphabet results
-  where results = map (transitionSet transition states) alphabet
+makeTransitions transition alphabetVals stateVals = zipWith ((,,) stateVals) alphabetVals results
+  where results = map (transitionSet transition stateVals) alphabetVals
 
 transitionSet :: (Ord state, Alphabet input, Eq input) => Transition state input -> S.Set state -> input -> S.Set state
-transitionSet transition states input = S.union newStates closure
-  where newStates = S.unions . S.map S.fromList . S.map (`transition` input) $ states
+transitionSet transition stateVals input = S.union newStates closure
+  where newStates = S.unions . S.map S.fromList . S.map (`transition` input) $ stateVals
         closure = S.unions . S.map (epsilonClosure transition) $ newStates

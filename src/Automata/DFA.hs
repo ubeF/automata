@@ -16,8 +16,8 @@ data DFA a b = DFA {
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
   where func state input = fromJust (M.lookup (state, input) transMap)
-        (states, inputs, results) = unzip3 $ transitions dfa
-        transMap = M.fromList (zip (zip states inputs) results)
+        (stateInputs, inputs, results) = unzip3 $ transitions dfa
+        transMap = M.fromList (zip (zip stateInputs inputs) results)
 
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
