@@ -1,21 +1,12 @@
-module Automata.Operators (singleton, emptyWord, emptyLang, kleene, _kleene, Automata.Operators.or, Automata.Operators.concat) where
+module Automata.Operators (singleton, emptyWord, emptyLang, kleeneStar, logicalOr, concatenate) where
 
 import Automata.NFA
 import qualified Data.Set as S
 
 data Marker a = A a | B a | New a deriving (Ord, Eq, Show)
 
-concat :: (Ord state, Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA Int input
-concat nfa1 nfa2 = normalize $ _concat nfa1 nfa2
-
-or :: (Ord state, Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA Int input
-or nfa1 nfa2 = normalize $ Automata.Operators._or nfa1 nfa2
-
-kleene :: (Ord state, Alphabet input) => NFA state input -> NFA Int input
-kleene = normalize . _kleene
-
-_concat :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
-_concat nfa1 nfa2 = NFA {
+concatenate :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
+concatenate nfa1 nfa2 = NFA {
     states = newStates
   , alphabet = newAlphabet
   , transitions = newTransitions  
@@ -30,8 +21,8 @@ _concat nfa1 nfa2 = NFA {
                          transitions nfaB <> 
                          map (\x -> (x , epsilon, initial nfaB)) (accept nfaA)
 
-_or :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
-_or nfa1 nfa2 = NFA {
+logicalOr :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
+logicalOr nfa1 nfa2 = NFA {
     states = newStates
   , alphabet = newAlphabet
   , transitions = newTransitions 
@@ -50,8 +41,8 @@ _or nfa1 nfa2 = NFA {
                          map (\x -> (x , epsilon, newAccept)) (accept nfaA) <> 
                          map (\x -> (x , epsilon, newAccept)) (accept nfaB)
 
-_kleene :: (Alphabet input) => NFA state input -> NFA (Marker state) input
-_kleene nfa = NFA {
+kleeneStar :: (Alphabet input) => NFA state input -> NFA (Marker state) input
+kleeneStar nfa = NFA {
     states = newStates
   , alphabet = alphabet nfaA
   , transitions = newTransitions 
