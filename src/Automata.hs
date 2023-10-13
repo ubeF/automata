@@ -1,9 +1,16 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Automata where
+module Automata (NFA, (<+>), star, epsilon, lit, times, range, makeAscii) where
 
-import Automata.NFA
-import Automata.Operators
+import Automata.NFA (Alphabet, NFA (alphabet), normalize)
+import Automata.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )
+
+instance (Alphabet a, Ord a) => Semigroup (NFA Int a) where
+  (<>) a b = normalize $ concatenate a b
+
+instance (Alphabet a, Ord a) => Monoid (NFA Int a) where
+  mempty = emptyWord
+
 
 (<+>) :: (Alphabet a, Ord a) => NFA Int a -> NFA Int a -> NFA Int a
 (<+>) a b = normalize $ logicalOr a b
@@ -17,10 +24,14 @@ star = normalize . kleeneStar
 epsilon :: (Alphabet a) => NFA Int a
 epsilon = emptyWord
 
-instance (Alphabet a, Ord a) => Semigroup (NFA Int a) where
-  (<>) a b = normalize $ concatenate a b
+range :: (Alphabet a, Ord a) => [a] -> NFA Int a
+range = foldr (<+>) epsilon . map lit
 
-instance (Alphabet a, Ord a) => Monoid (NFA Int a) where
-  mempty = emptyWord
+times :: (Alphabet a, Ord a) => (Int, Int) -> NFA Int a -> NFA Int a
+times (lower, upper) dfa = foldr (<+>) epsilon . map mconcat $ map (`replicate` dfa) [lower..upper]
 
+ascii :: String
+ascii = map toEnum [32..127]
 
+makeAscii ::  NFA Int Char -> NFA Int Char
+makeAscii dfa = dfa {alphabet=ascii}
