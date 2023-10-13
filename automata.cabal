@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Automata
       Automata.NFA
       Automata.DFA
       Automata.Operators
