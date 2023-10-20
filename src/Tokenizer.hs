@@ -25,7 +25,7 @@ tokenize tok input = token : tokenize tok rest
           | all (isStuck . fst) tokenizer = match
           | otherwise = case filter isMatched advanced of
               [] -> scan advanced match (x:prev) xs
-              (top:_) -> scan advanced (Just (apply top . reverse $ prev, xs)) (x:prev) xs
+              (top:_) -> scan advanced (Just (apply top . reverse $ x:prev, xs)) (x:prev) xs
               where advanced = map (`advance` x) tokenizer
           
 -- Test
