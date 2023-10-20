@@ -1,4 +1,4 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, isStuck) where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -22,20 +22,27 @@ getTransitionFunction dfa = func
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
 
+isStuck :: (Eq a) => DFA a b -> Bool
+-- Not sure if this will detect all junk-states; should work on minimized DFAs
+isStuck dfa = all (\(_, _, c) -> c == initial dfa) . filter (\(a, _, _) -> a == initial dfa) $ transitions dfa
+
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
-eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs 
+eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs
 
 run :: (Ord a, Ord b) => DFA a b -> [b] -> DFA a b
 run dfa [] = dfa
-run dfa (x:xs) = run dfa {initial=newState} xs
-  where newState = (getTransitionFunction dfa) (initial dfa) x
+run dfa (x:xs) = run (step dfa x) xs
+
+step :: (Ord a, Ord b) => DFA a b -> b -> DFA a b
+step dfa x = dfa {initial=newState}
+    where newState = (getTransitionFunction dfa) (initial dfa) x
 
 transformStates :: (a -> b) -> DFA a c -> DFA b c
-transformStates f dfa = dfa { 
+transformStates f dfa = dfa {
       states=newStates
     , initial=newInitial
     , accept=newAccept
-    , transitions=newTransitions 
+    , transitions=newTransitions
     }
   where newInitial = f . initial $ dfa
         newStates = map f. states $ dfa
@@ -97,7 +104,7 @@ instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
           rows = map makeRow . states $ dfa
           makeRow x = L.intercalate " | " [
               mconcat [if getAcceptFunction dfa x then "*" else " ", " ", if x == initial dfa then ">" else " "]
-            , padRight stateWidth . show $ x  
+            , padRight stateWidth . show $ x
             , unwords . map (padRight inputWidth) . map show $ map (getTransitionFunction dfa x) (alphabet dfa)
             ]
 
