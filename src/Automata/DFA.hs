@@ -1,4 +1,4 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, isStuck) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, isStuck, step) where
 
 import Data.Maybe
 import qualified Data.Map as M
