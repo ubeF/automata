@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Automata (NFA, (<+>), star, epsilon, lit, times, range, makeAscii) where
+module Automata (NFA, (<+>), star, epsilon, lit, times, range, makeAscii, ascii) where
 
 import Automata.NFA (Alphabet, NFA (alphabet), normalize)
 import Automata.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )

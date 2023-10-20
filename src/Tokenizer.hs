@@ -1,6 +1,8 @@
 module Tokenizer where
 
 import Automata.DFA
+import Automata.NFA (toDFA)
+import Automata
 
 type Rule a b = (DFA Int a, [a] -> b)
 type Tokenizer a b = [Rule a b]
@@ -26,4 +28,30 @@ tokenize tok input = token : tokenize tok rest
               (top:_) -> scan advanced (Just (apply top . reverse $ prev, xs)) (x:prev) xs
               where advanced = map (`advance` x) tokenizer
           
-                                        
+-- Test
+
+data IP  = IP String | Junk deriving Show
+
+digits :: NFA Int Char
+digits = times (1,4) (range ['0'..'9'])
+
+ip :: DFA Int Char
+ip = minimize . toDFA . makeAscii $ digits <> lit '.' <> digits <> lit '.' <> digits <> lit '.' <> digits
+
+ipRule :: Rule Char IP
+ipRule = (ip, IP)
+
+junk :: DFA Int Char
+junk = minimize . toDFA . makeAscii $ range ascii
+
+junkRule :: Rule Char IP
+junkRule = (junk, const Junk)
+
+ipTokenizer :: Tokenizer Char IP
+ipTokenizer = [ipRule, junkRule]
+
+testString :: String
+testString = "ad f123.456.3.1     fdsf!d 1.2.3.4ffdf"
+
+result :: [IP]
+result = tokenize ipTokenizer testString
