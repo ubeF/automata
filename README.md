@@ -13,7 +13,4 @@ Currently implemented features:
   - Evaluation of NFAs
   - Conversion from NFAs to DFAs
   - Operators and Generators for NFAs
-
-Currently planned features:
-  - [x] Minimization of DFAs
-  - [ ] Automatic creation of NFAs from Regular Expressions
+  - Minimalistic Tokenizer using minimized DFAs
