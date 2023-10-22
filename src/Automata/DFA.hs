@@ -1,4 +1,4 @@
-module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, isStuck, step) where
+module Automata.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step) where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -22,9 +22,12 @@ getTransitionFunction dfa = func
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
 
-isStuck :: (Eq a) => DFA a b -> Bool
--- Not sure if this will detect all junk-states; should work on minimized DFAs
-isStuck dfa = all (\(_, _, c) -> c == initial dfa) . filter (\(a, _, _) -> a == initial dfa) $ transitions dfa
+findJunkState :: (Ord a, Ord b) => DFA a b -> Maybe a
+findJunkState dfa = case filter (\(a, b) -> all (==a) b) resultPairs of
+    [] -> Nothing
+    (x:_) -> Just . fst $ x
+  where f = getTransitionFunction dfa
+        resultPairs = zip (states dfa) $ map (\x -> map (f x) (alphabet dfa)) (states dfa)
 
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
 eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs

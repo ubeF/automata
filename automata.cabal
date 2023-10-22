@@ -30,6 +30,7 @@ library
       Automata.DFA
       Automata.Operators
       Tokenizer
+      Tokenizer.DFA
   other-modules:
       Paths_automata
   hs-source-dirs:
