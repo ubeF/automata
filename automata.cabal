@@ -29,6 +29,7 @@ library
       Automata.NFA
       Automata.DFA
       Automata.Operators
+      Tokenizer
   other-modules:
       Paths_automata
   hs-source-dirs:
