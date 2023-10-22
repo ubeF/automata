@@ -5,7 +5,7 @@ import qualified Data.Set as S
 
 data Marker a = A a | B a | New a deriving (Ord, Eq, Show)
 
-concatenate :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
+concatenate :: (Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
 concatenate nfa1 nfa2 = NFA {
     states = newStates
   , alphabet = newAlphabet
@@ -19,9 +19,9 @@ concatenate nfa1 nfa2 = NFA {
         newStates = states nfaA <> states nfaB
         newTransitions = transitions nfaA <> 
                          transitions nfaB <> 
-                         map (\x -> (x , epsilon, initial nfaB)) (accept nfaA)
+                         map (\x -> (x , Nothing, initial nfaB)) (accept nfaA)
 
-logicalOr :: (Alphabet input, Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
+logicalOr :: (Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
 logicalOr nfa1 nfa2 = NFA {
     states = newStates
   , alphabet = newAlphabet
@@ -37,11 +37,11 @@ logicalOr nfa1 nfa2 = NFA {
         newStates = states nfaA <> states nfaB <> [newInitial, newAccept]
         newTransitions = transitions nfaA <> 
                          transitions nfaB <>
-                         [(newInitial, epsilon, initial nfaA), (newInitial, epsilon, initial nfaB)] <>
-                         map (\x -> (x , epsilon, newAccept)) (accept nfaA) <> 
-                         map (\x -> (x , epsilon, newAccept)) (accept nfaB)
+                         [(newInitial, Nothing, initial nfaA), (newInitial, Nothing, initial nfaB)] <>
+                         map (\x -> (x , Nothing, newAccept)) (accept nfaA) <> 
+                         map (\x -> (x , Nothing, newAccept)) (accept nfaB)
 
-kleeneStar :: (Alphabet input) => NFA state input -> NFA (Marker state) input
+kleeneStar :: NFA state input -> NFA (Marker state) input
 kleeneStar nfa = NFA {
     states = newStates
   , alphabet = alphabet nfaA
@@ -54,9 +54,9 @@ kleeneStar nfa = NFA {
         newAccept = New . head . accept $ nfa
         newStates = states nfaA <> [newAccept, newInitial]
         newTransitions = transitions nfaA <> 
-                         [(newInitial, epsilon, initial nfaA), (newInitial, epsilon, newAccept)] <>
-                         map (\x -> (x , epsilon, newAccept)) (accept nfaA) <>
-                         map (\x -> (x , epsilon, initial nfaA)) (accept nfaA)
+                         [(newInitial, Nothing, initial nfaA), (newInitial, Nothing, newAccept)] <>
+                         map (\x -> (x , Nothing, newAccept)) (accept nfaA) <>
+                         map (\x -> (x , Nothing, initial nfaA)) (accept nfaA)
 
 emptyLang :: NFA Int input
 emptyLang = NFA {
@@ -67,11 +67,11 @@ emptyLang = NFA {
   , accept = [1]
   }
 
-emptyWord :: (Alphabet input) => NFA Int input
+emptyWord :: NFA Int input
 emptyWord = NFA {
     states = [0, 1]
   , alphabet = []
-  , transitions = [(0, epsilon, 1)]
+  , transitions = [(0, Nothing, 1)]
   , initial = 0
   , accept = [1]
   }
@@ -80,7 +80,7 @@ singleton :: input -> NFA Int input
 singleton x = NFA {
     states = [0, 1]
   , alphabet = [x]
-  , transitions = [(0, x, 1)]
+  , transitions = [(0, Just x, 1)]
   , initial = 0
   , accept = [1]
   }
