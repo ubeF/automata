@@ -35,6 +35,8 @@ library:
     - Automata.NFA
     - Automata.DFA
     - Automata.Operators
+    - Tokenizer
+    - Tokenizer.DFA
 
 tests:
   automata-test:
