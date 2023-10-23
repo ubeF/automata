@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Automata (NFA, (<+>), star, epsilon, lit, times, range) where
+module Automata (NFA, (<+>), star, epsilon, lit, times, range, word) where
 
 import Automata.NFA (NFA, normalize)
 import Automata.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )
@@ -26,6 +26,9 @@ epsilon = emptyWord
 
 range :: (Ord a) => [a] -> NFA Int a
 range = foldr (<+>) epsilon . map lit
+
+word :: (Ord a) => [a] -> NFA Int a
+word = mconcat . map lit
 
 times :: (Ord a) => (Int, Int) -> NFA Int a -> NFA Int a
 times (lower, upper) dfa = foldr (<+>) epsilon . map mconcat $ map (`replicate` dfa) [lower..upper]
