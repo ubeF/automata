@@ -1,7 +1,7 @@
-module Automata.NFA (NFA (..), eval, toDFA, normalize, transformStates) where
+module Regular.NFA (NFA (..), eval, toDFA, normalize, transformStates) where
 
 import qualified Data.Set as S
-import qualified Automata.DFA as DFA
+import qualified Regular.DFA as DFA
 import qualified Data.Map as M
 import Data.Maybe
 

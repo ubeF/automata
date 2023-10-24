@@ -1,7 +1,7 @@
 module Tokenizer.DFA (DFA (..), step, compile, isAccepting, isJunked) where
 
-import qualified Automata.DFA as D
-import qualified Automata.NFA as N
+import qualified Regular.DFA as D
+import qualified Regular.NFA as N
 import qualified Data.Set as S
 import Data.Maybe
 

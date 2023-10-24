@@ -1,7 +1,7 @@
 module Tokenizer where
 
 import Tokenizer.DFA
-import Automata.NFA (NFA)
+import Regular.NFA (NFA)
 import Data.Maybe
 import qualified Data.Set as S
 

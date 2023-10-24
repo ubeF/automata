@@ -1,6 +1,6 @@
-module Automata.Operators (singleton, emptyWord, emptyLang, kleeneStar, logicalOr, concatenate) where
+module Regular.Operators (singleton, emptyWord, emptyLang, kleeneStar, logicalOr, concatenate) where
 
-import Automata.NFA
+import Regular.NFA
 import qualified Data.Set as S
 
 data Marker a = A a | B a | New a deriving (Ord, Eq, Show)

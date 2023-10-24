@@ -1,6 +1,6 @@
 module TokenTest where
 import Tokenizer
-import Automata
+import Regular
 
 digits :: NFA Int Char
 digits = times (1,4) (range ['0'..'9'])

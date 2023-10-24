@@ -1,9 +1,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Automata (NFA, (<+>), star, epsilon, lit, times, range, word) where
+module Regular (NFA, (<+>), star, epsilon, lit, times, range, word) where
 
-import Automata.NFA (NFA, normalize)
-import Automata.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )
+import Regular.NFA (NFA, normalize)
+import Regular.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )
 
 instance (Ord a) => Semigroup (NFA Int a) where
   (<>) a b = normalize $ concatenate a b

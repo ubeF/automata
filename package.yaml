@@ -31,10 +31,10 @@ ghc-options:
 library:
   source-dirs: src
   exposed-modules:
-    - Automata
-    - Automata.NFA
-    - Automata.DFA
-    - Automata.Operators
+    - Regular
+    - Regular.NFA
+    - Regular.DFA
+    - Regular.Operators
     - Tokenizer
     - Tokenizer.DFA
 
