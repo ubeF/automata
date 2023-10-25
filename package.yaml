@@ -37,7 +37,7 @@ library:
     - Regular.Operators
     - Tokenizer
     - Tokenizer.DFA
-
+    - ContextFree.PDA
 tests:
   automata-test:
     main:                Spec.hs

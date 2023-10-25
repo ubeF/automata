@@ -31,6 +31,7 @@ library
       Regular.Operators
       Tokenizer
       Tokenizer.DFA
+      ContextFree.PDA
   other-modules:
       Paths_automata
   hs-source-dirs:
