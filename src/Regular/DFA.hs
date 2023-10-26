@@ -59,6 +59,7 @@ normalize dfa = transformStates func dfa
   where valMap = M.fromList $ zip (states dfa) [1..]
         func x = fromJust $ M.lookup x valMap
 
+
 minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
 minimize dfa = removeDuplicateStates . normalize . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
@@ -79,16 +80,18 @@ findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
 --         transitionSet set input = S.map (transition input) set
 --         bulkTransitionSet inputs set = map (transitionSet set) inputs
 
+calcFutures :: (Ord a) => [S.Set a -> S.Set a] -> S.Set a -> (S.Set a, S.Set (S.Set a))
+calcFutures funcs set = (set, S.fromList $ funcs <*> pure set)
 
 findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
-findNonDistinctPairs dfa (potential, distinct) = go potentiated distinct
-  where f = flip . getTransitionFunction $ dfa
-        potentiated = undefined
-        go a b
-            | S.null newDistinct = b
-            | otherwise = go (S.difference potential newDistinct, S.union distinct newDistinct)
-            where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
-
+findNonDistinctPairs dfa (potential, distinct) = go futures distinct
+  where funcs = map (flip . getTransitionFunction $ dfa) (alphabet dfa)
+        setTransitions = map S.map funcs
+        futures = S.map (calcFutures setTransitions) potential
+        go potential distinct 
+          | S.null x = S.map fst potential
+          | otherwise = go (S.difference potential x) (S.union distinct (S.map fst potential))
+          where x = S.filter (not . S.disjoint distinct . snd) potential
 
 mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
 mergeStates dfa pairs = transformStates f dfa
@@ -106,6 +109,7 @@ removeDuplicateStates dfa = dfa { accept=newAccept, states=newStates, transition
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = S.toList . S.fromList
+
 
 instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
   show dfa = L.intercalate "\n" $ header : rows
