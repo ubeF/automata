@@ -1,9 +1,10 @@
-module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step) where
+module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step, findNecessarilyDistinctPairs, findNonDistinctPairs) where
 
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
+import Debug.Trace
 
 data DFA a b = DFA {
     states :: [a]
@@ -17,7 +18,7 @@ getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
   where func state input = fromJust (M.lookup (state, input) transMap)
         (stateInputs, inputs, results) = unzip3 $ transitions dfa
-        transMap = M.fromList (zip (zip stateInputs inputs) results)
+        transMap = trace "created Map" $ M.fromList (zip (zip stateInputs inputs) results)
 
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
@@ -69,14 +70,25 @@ findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
         potentialPairs = S.union (cartesianProduct acceptingStates) (cartesianProduct nonAcceptingStates)
         distinctPairs = S.difference (cartesianProduct allStates) potentialPairs
 
+-- findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
+-- findNonDistinctPairs dfa (potential, distinct)
+--   | S.null newDistinct = potential
+--   | otherwise = findNonDistinctPairs dfa (S.difference potential newDistinct, S.union distinct newDistinct)
+--   where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
+--         transition = flip . getTransitionFunction $ dfa
+--         transitionSet set input = S.map (transition input) set
+--         bulkTransitionSet inputs set = map (transitionSet set) inputs
+
+
 findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
-findNonDistinctPairs dfa (potential, distinct)
-  | S.null newDistinct = potential
-  | otherwise = findNonDistinctPairs dfa (S.difference potential newDistinct, S.union distinct newDistinct)
-  where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
-        transition = flip . getTransitionFunction $ dfa
-        transitionSet set input = S.map (transition input) set
-        bulkTransitionSet inputs set = map (transitionSet set) inputs
+findNonDistinctPairs dfa (potential, distinct) = go potentiated distinct
+  where f = flip . getTransitionFunction $ dfa
+        potentiated = undefined
+        go a b
+            | S.null newDistinct = b
+            | otherwise = go (S.difference potential newDistinct, S.union distinct newDistinct)
+            where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
+
 
 mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
 mergeStates dfa pairs = transformStates f dfa
