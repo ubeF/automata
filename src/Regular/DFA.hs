@@ -4,7 +4,6 @@ import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
-import Debug.Trace
 
 data DFA a b = DFA {
     states :: [a]
@@ -18,7 +17,7 @@ getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
   where func state input = fromJust (M.lookup (state, input) transMap)
         (stateInputs, inputs, results) = unzip3 $ transitions dfa
-        transMap = trace "created Map" $ M.fromList (zip (zip stateInputs inputs) results)
+        transMap = M.fromList (zip (zip stateInputs inputs) results)
 
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
