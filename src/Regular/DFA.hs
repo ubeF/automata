@@ -1,4 +1,4 @@
-module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step) where
+module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step, findNecessarilyDistinctPairs, findNonDistinctPairs, lookAhead) where
 
 import Data.Maybe
 import qualified Data.Map as M
@@ -58,8 +58,9 @@ normalize dfa = transformStates func dfa
   where valMap = M.fromList $ zip (states dfa) [1..]
         func x = fromJust $ M.lookup x valMap
 
+
 minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
-minimize dfa = removeDuplicateStates . normalize . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
+minimize dfa = normalize . removeDuplicateStates . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
 findNecessarilyDistinctPairs :: (Ord a) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a))
 findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
@@ -69,21 +70,25 @@ findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)
         potentialPairs = S.union (cartesianProduct acceptingStates) (cartesianProduct nonAcceptingStates)
         distinctPairs = S.difference (cartesianProduct allStates) potentialPairs
 
-findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
-findNonDistinctPairs dfa (potential, distinct)
-  | S.null newDistinct = potential
-  | otherwise = findNonDistinctPairs dfa (S.difference potential newDistinct, S.union distinct newDistinct)
-  where newDistinct = S.filter (any (`elem` distinct) . bulkTransitionSet (alphabet dfa)) potential
+lookAhead :: (Ord a, Ord b) => DFA a b  -> S.Set (S.Set a) -> S.Set (S.Set a, S.Set (S.Set a))
+lookAhead dfa = S.map (\x -> (x, f x))
+  where f set = S.fromList $ funcs <*> pure set
         transition = flip . getTransitionFunction $ dfa
-        transitionSet set input = S.map (transition input) set
-        bulkTransitionSet inputs set = map (transitionSet set) inputs
+        funcs = map (S.map . transition) . alphabet $ dfa
+
+findNonDistinctPairs :: (Ord a, Ord b) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a)) -> S.Set (S.Set a)
+findNonDistinctPairs dfa (unknown, necessarilyDistinct) = go (lookAhead dfa unknown) necessarilyDistinct
+  where go potential distinct 
+          | S.null newDistinct = S.map fst potential
+          | otherwise = go (S.difference potential newDistinct) (S.union distinct (S.map fst potential))
+          where newDistinct = S.filter (not . S.disjoint distinct . snd) potential
 
 mergeStates :: (Ord a) => DFA a b -> S.Set (S.Set a) -> DFA (S.Set a) b
 mergeStates dfa pairs = transformStates f dfa
   where f x = foldr (\merge state -> if S.disjoint merge state then state else S.union merge state) (S.singleton x) pairs
 
 cartesianProduct :: (Ord a) => S.Set a -> S.Set (S.Set a)
-cartesianProduct set = S.map tupleToSet (S.cartesianProduct set set)
+cartesianProduct set = S.filter ((>1) . S.size) . S.map tupleToSet $ S.cartesianProduct set set
   where tupleToSet (a, b) = S.fromList [a, b]
 
 removeDuplicateStates :: (Ord a, Ord b) => DFA a b -> DFA a b
@@ -94,6 +99,7 @@ removeDuplicateStates dfa = dfa { accept=newAccept, states=newStates, transition
 
 removeDuplicates :: (Ord a) => [a] -> [a]
 removeDuplicates = S.toList . S.fromList
+
 
 instance (Show a, Show b, Ord a, Ord b) => Show (DFA a b) where
   show dfa = L.intercalate "\n" $ header : rows

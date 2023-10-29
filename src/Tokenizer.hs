@@ -6,7 +6,7 @@ import Data.Maybe
 import qualified Data.Set as S
 
 type Rule a b = (DFA Int a, [a] -> b)
-type Tokenizer a b = [Rule a b]
+type Tokenizer a b = [Rule a b] 
 
 apply :: Rule a b -> [a] -> b
 apply = snd
