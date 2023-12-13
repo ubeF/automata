@@ -33,6 +33,7 @@ library
       Tokenizer.DFA
       ContextFree.PDA
   other-modules:
+      Regular.Minimal
       Paths_automata
   hs-source-dirs:
       src
