@@ -1,6 +1,7 @@
 module Tokenizer.DFA (DFA (..), step, compile, isAccepting, isJunked) where
 
 import qualified Regular.DFA as D
+import qualified Regular.Minimal as MD
 import qualified Regular.NFA as N
 import qualified Data.Set as S
 import Data.Maybe
@@ -26,14 +27,14 @@ step :: DFA a b -> b -> DFA a b
 step dfa x = dfa { current = newState }
   where newState = transition dfa (current dfa) x
 
-optimize :: (Ord a, Ord b, Bounded a, Enum a) => D.DFA a b -> DFA a b
+optimize :: (Ord a, Ord b, Bounded a, Enum a) => MD.DFA a b -> DFA a b
 optimize dfa = DFA {
     transition = func
-  , current = D.initial dfa
-  , accept = S.fromList . D.accept $ dfa
+  , current = MD.initial dfa
+  , accept = S.fromList . MD.accept $ dfa
   , junk = junkState
   }
-  where junkState = fromMaybe (head . filter (not . (`elem` D.states dfa)) $ [minBound..]) (D.findJunkState dfa)
+  where junkState = fromMaybe (head . filter (not . (`elem` MD.states dfa)) $ [minBound..]) (MD.findJunkState dfa)
         func state input
-          | input `elem` D.alphabet dfa = D.getTransitionFunction dfa state input
+          | input `elem` MD.alphabet dfa = MD.transition dfa state input
           | otherwise = junkState
