@@ -16,8 +16,8 @@ data NFA a b = NFA {
 } deriving (Show)
 
 
-getTransitionFunction:: (Ord state, Ord input) => NFA state input -> (state -> Maybe input -> [state])
-getTransitionFunction nfa = function
+transitionFunc :: (Ord state, Ord input) => NFA state input -> (state -> Maybe input -> [state])
+transitionFunc nfa = function
   where (stateInputs, inputs, _) = unzip3 . transitions $ nfa
         resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions nfa) stateInputs inputs
         valMap = M.fromList (zip (zip stateInputs inputs) resultLists)
@@ -25,33 +25,33 @@ getTransitionFunction nfa = function
           Nothing -> []
           (Just val) -> val
 
-getEpsilonClosure :: (Ord input, Ord state) => NFA state input -> (state -> S.Set state)
-getEpsilonClosure nfa state = S.unions . (S.singleton state :) . map (getEpsilonClosure nfa) . epsilonTransition $ state
-  where epsilonTransition s = getTransitionFunction nfa s Nothing 
+epsilonClosure :: (Ord input, Ord state) => NFA state input -> (state -> S.Set state)
+epsilonClosure nfa state = S.unions . (S.singleton state :) . map (epsilonClosure nfa) . epsilonTransition $ state
+  where epsilonTransition s = transitionFunc nfa s Nothing 
 
-getSetTransitionFunction ::(Ord input, Ord state) => NFA state input -> (S.Set state -> input -> S.Set state)
-getSetTransitionFunction nfa = func
-  where epsilonClosure = getEpsilonClosure nfa
-        transition symbol state = (getTransitionFunction nfa) state (Just symbol)
-        func states symbol = S.unions . S.map (S.unions . map epsilonClosure . transition symbol) $ states
+linearTransitionFunc ::(Ord input, Ord state) => NFA state input -> (S.Set state -> input -> S.Set state)
+linearTransitionFunc nfa = func
+  where closure = epsilonClosure nfa
+        transition symbol state = (transitionFunc nfa) state (Just symbol)
+        func stateSet symbol = S.unions . S.map (S.unions . map closure . transition symbol) $ stateSet
 
 potentiateStates :: (Ord input, Ord state) => NFA state input -> Graph (S.Set state) input
 potentiateStates nfa = fromFunction trans start (alphabet nfa)
-  where trans = getSetTransitionFunction nfa
-        start = getEpsilonClosure nfa $ initial nfa
+  where trans = linearTransitionFunc nfa
+        start = epsilonClosure nfa $ initial nfa
 
 toDFA :: (Ord input, Ord state) => NFA state input -> D.DFA Int input
 toDFA nfa = D.normalize $ D.DFA {
     D.alphabet = alphabet nfa
   , D.transitions = toList graph
   , D.accept = filter (\x -> not $ S.disjoint x (S.fromList . accept $ nfa)) . vertices $ graph
-  , D.initial = getEpsilonClosure nfa (initial nfa)
+  , D.initial = epsilonClosure nfa (initial nfa)
   , D.states = vertices graph
   }
   where graph = potentiateStates nfa
 
 eval :: (Ord state, Ord input) => NFA state input -> [input] -> Bool
 eval nfa = isAccepted . foldr trans start 
-  where trans = flip $ getSetTransitionFunction nfa
+  where trans = flip $ linearTransitionFunc nfa
         isAccepted = not . S.disjoint (S.fromList . accept $ nfa)
-        start = getEpsilonClosure nfa (initial nfa)
+        start = epsilonClosure nfa (initial nfa)

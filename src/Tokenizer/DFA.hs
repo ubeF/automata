@@ -1,10 +1,12 @@
 module Tokenizer.DFA (DFA (..), step, compile, isAccepting, isJunked) where
 
+
 import qualified Regular.DFA as D
 import qualified Regular.Minimal as MD
 import qualified Regular.NFA as N
 import qualified Data.Set as S
 import Data.Maybe
+
 
 data DFA a b = DFA {
   -- DFA optimized for usage in tokenizer
@@ -13,6 +15,7 @@ data DFA a b = DFA {
   , accept :: S.Set a
   , junk :: a
 }
+
 
 compile :: (Ord a, Ord b) => N.NFA a b -> DFA Int b
 compile = optimize . D.minimize . N.toDFA
