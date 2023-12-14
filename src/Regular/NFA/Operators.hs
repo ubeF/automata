@@ -1,8 +1,10 @@
-module Regular.NFA.Operators (singleton, emptyWord, emptyLang, kleeneStar, logicalOr, concatenate) where
+module Regular.NFA.Operators (singleton, emptyWord, emptyLang, kleeneStar, logicalOr, concatenate, normalize) where
 
 
 import Regular.NFA (NFA(..))
 import qualified Data.Set as S
+import qualified Data.Map as M
+import Data.Maybe (fromJust)
 
 
 data Marker a = A a | B a | New a deriving (Ord, Eq, Show)
@@ -20,6 +22,11 @@ transformStates f nfa = nfa {
         newAccept = map f . accept $ nfa
         (a, b, c) = unzip3 . transitions $ nfa
         newTransitions = zip3 (map f a) b (map f c)
+
+normalize :: (Ord a) => NFA a b -> NFA Int b
+normalize nfa = transformStates func nfa
+  where valMap = M.fromList $ zip (states nfa) [1..]
+        func x = fromJust $ M.lookup x valMap
 
 concatenate :: (Ord input) => NFA state input -> NFA state input -> NFA (Marker state) input
 concatenate nfa1 nfa2 = NFA {
