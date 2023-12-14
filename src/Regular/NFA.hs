@@ -59,4 +59,9 @@ toDFA nfa = D.normalize $ D.DFA {
   }
   where dict = potentiateStates nfa
         trans = concatMap (\(x, tuples) -> map (\(y, z) -> (x, y, z)) tuples) . M.toList $ dict
-        
+
+eval :: (Ord state) => NFA state Char -> String -> Bool
+eval nfa = isAccepted . foldr trans start 
+  where trans = flip $ getSetTransitionFunction nfa
+        isAccepted = not . S.disjoint (S.fromList . accept $ nfa)
+        start = getEpsilonClosure nfa (initial nfa)
