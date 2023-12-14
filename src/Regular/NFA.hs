@@ -2,7 +2,7 @@ module Regular.NFA (NFA (..), Transition, toDFA, getTransitionFunction, getAccep
 
 
 import qualified Data.Set as S
-import qualified Regular.DFA as DFA
+import qualified Regular.DFA as D
 import qualified Data.Map as M
 
 
@@ -29,32 +29,34 @@ getTransitionFunction nfa = function
 getAcceptFunction :: (Eq state) => NFA state input -> (state -> Bool)
 getAcceptFunction nfa = (`elem` accept nfa)
 
-toDFA :: (Ord state, Ord input) => NFA state input -> DFA.DFA Int input
-toDFA nfa = DFA.normalize (DFA.DFA  newStates (alphabet nfa) newTransitions newInitial newAccept)
-  where transition = getTransitionFunction nfa
-        newInitial = epsilonClosure transition (initial nfa)
-        newTransitions = potentiateStates transition (alphabet nfa) newInitial
-        (a, _, b) = unzip3 newTransitions
-        newStates = S.toList $ S.union (S.fromList a) (S.fromList b)
-        newAccept = filter (any (getAcceptFunction nfa)) . S.toList . S.fromList $ newStates
+getEpsilonClosure :: (Ord input, Ord state) => NFA state input -> (state -> S.Set state)
+getEpsilonClosure nfa state = S.unions . (S.singleton state :) . map (getEpsilonClosure nfa) . epsilonTransition $ state
+  where epsilonTransition s = getTransitionFunction nfa s Nothing 
 
-epsilonClosure :: (Eq input, Ord state) => Transition state input -> state -> S.Set state
-epsilonClosure transition state = S.unions . S.insert (S.singleton state) . S.map (epsilonClosure transition) . S.fromList $ transition state Nothing
+getSetTransitionFunction ::(Ord input, Ord state) => NFA state input -> (S.Set state -> input -> S.Set state)
+getSetTransitionFunction nfa = func
+  where epsilonClosure = getEpsilonClosure nfa
+        transition symbol state = (getTransitionFunction nfa) state (Just symbol)
+        func states symbol = S.unions . S.map (S.unions . map epsilonClosure . transition symbol) $ states
 
-potentiateStates :: (Ord state, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
-potentiateStates transition alphabetVals = go []
-  where go trans state = case todo of
-          [] -> newTransitions
-          x:_ -> go newTransitions x
-          where newTransitions = trans ++ makeTransitions transition alphabetVals state
-                (done, _, results) = unzip3 newTransitions
-                todo = filter (not . (`elem` done)) results
+potentiateStates :: (Ord input, Ord state) => NFA state input -> M.Map (S.Set state) [(input, S.Set state)]
+potentiateStates nfa = go start M.empty
+  where trans = getSetTransitionFunction nfa
+        start = getEpsilonClosure nfa $ initial nfa
+        go states dict
+          | M.member states dict = dict
+          | otherwise = foldr go newDict results
+            where results = map (trans states) . alphabet $ nfa
+                  newDict = M.insert states (zip (alphabet nfa) results) dict
 
-makeTransitions :: (Ord state, Eq input) => Transition state input -> [input] -> S.Set state -> [(S.Set state, input, S.Set state)]
-makeTransitions transition alphabetVals stateVals = zipWith ((,,) stateVals) alphabetVals results
-  where results = map (transitionSet transition stateVals) alphabetVals
-
-transitionSet :: (Ord state, Eq input) => Transition state input -> S.Set state -> input -> S.Set state
-transitionSet transition stateVals input = S.union newStates closure
-  where newStates = S.unions . S.map S.fromList . S.map (`transition` Just input) $ stateVals
-        closure = S.unions . S.map (epsilonClosure transition) $ newStates
+toDFA :: (Ord input, Ord state) => NFA state input -> D.DFA Int input
+toDFA nfa = D.normalize $ D.DFA {
+    D.alphabet = alphabet nfa
+  , D.transitions = trans
+  , D.accept = filter (\x -> not $ S.disjoint x (S.fromList . accept $ nfa)) . M.keys $ dict
+  , D.initial = getEpsilonClosure nfa (initial nfa)
+  , D.states = M.keys dict
+  }
+  where dict = potentiateStates nfa
+        trans = concatMap (\(x, tuples) -> map (\(y, z) -> (x, y, z)) tuples) . M.toList $ dict
+        
