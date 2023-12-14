@@ -1,10 +1,12 @@
-module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, step, findNecessarilyDistinctPairs, findNonDistinctPairs, lookAhead) where
+module Regular.DFA (DFA (..), eval, normalize, minimize) where
+
 
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
 import qualified Regular.Minimal as RM
+
 
 data DFA a b = DFA {
     states :: [a]
@@ -13,6 +15,7 @@ data DFA a b = DFA {
   , initial :: a
   , accept :: [a]
 }
+
 
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func

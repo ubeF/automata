@@ -34,6 +34,8 @@ library
       ContextFree.PDA
   other-modules:
       Regular.Minimal
+      Regular.NFA.Evaluation
+      Regular.NFA.Operators
       Paths_automata
   hs-source-dirs:
       src

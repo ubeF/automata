@@ -1,4 +1,4 @@
-module Regular.Minimal where
+module Regular.Minimal (DFA(..), findJunkState) where
 
 data DFA a b = DFA {
     transition :: a -> b -> a

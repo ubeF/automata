@@ -1,9 +1,10 @@
-module Regular.NFA (NFA (..), eval, toDFA, normalize, transformStates) where
+module Regular.NFA (NFA (..), Transition, toDFA, getTransitionFunction, getAcceptFunction) where
+
 
 import qualified Data.Set as S
 import qualified Regular.DFA as DFA
 import qualified Data.Map as M
-import Data.Maybe
+
 
 data NFA a b = NFA {
     states :: [a]
@@ -13,25 +14,8 @@ data NFA a b = NFA {
   , accept :: [a]
 } deriving (Show)
 
-transformStates :: (a -> b) -> NFA a c -> NFA b c
-transformStates f nfa = nfa { 
-      states=newStates
-    , initial=newInitial
-    , accept=newAccept
-    , transitions=newTransitions 
-    }
-  where newInitial = f . initial $ nfa
-        newStates = map f. states $ nfa
-        newAccept = map f . accept $ nfa
-        (a, b, c) = unzip3 . transitions $ nfa
-        newTransitions = zip3 (map f a) b (map f c)
-
-normalize :: (Ord a) => NFA a b -> NFA Int b
-normalize nfa = transformStates func nfa
-  where valMap = M.fromList $ zip (states nfa) [1..]
-        func x = fromJust $ M.lookup x valMap
-
 type Transition state input = state -> Maybe input -> [state]
+
 
 getTransitionFunction:: (Ord state, Ord input) => NFA state input -> Transition state input
 getTransitionFunction nfa = function
@@ -44,36 +28,6 @@ getTransitionFunction nfa = function
 
 getAcceptFunction :: (Eq state) => NFA state input -> (state -> Bool)
 getAcceptFunction nfa = (`elem` accept nfa)
-
-data Result = Success | Failure | Continue deriving (Show)
-
-data Config state input = Config state [input]
-
-eval :: (Ord state, Ord input) => NFA state input -> [input] -> Bool
-eval nfa input = run [Config (initial nfa) input]
-  where run vals = case evaluateConfigs (getAcceptFunction nfa) vals of
-                        Success -> True
-                        Failure -> False
-                        Continue -> run . concatMap (generateConfigs . getTransitionFunction $ nfa) $ vals
-
-generateConfigs :: Transition state input -> Config state input -> [Config state input]
-generateConfigs transition (Config state word) = configs <> epsilonConfigs
-  where gen input rest = map (`Config` rest) (transition state input)
-        configs
-          | null word = []
-          | otherwise = gen (Just . head $ word) (tail word)
-        epsilonConfigs = gen Nothing word
-
-evaluateConfigs :: (state -> Bool) -> [Config state input] -> Result
-evaluateConfigs _ [] = Failure
-evaluateConfigs acc configs
-  | any (evaluateConfig acc) configs = Success
-  | otherwise = Continue
-
-evaluateConfig :: (state -> Bool) -> Config state input -> Bool
-evaluateConfig acc (Config state word)
-  | null word = acc state
-  | otherwise = False
 
 toDFA :: (Ord state, Ord input) => NFA state input -> DFA.DFA Int input
 toDFA nfa = DFA.normalize (DFA.DFA  newStates (alphabet nfa) newTransitions newInitial newAccept)
