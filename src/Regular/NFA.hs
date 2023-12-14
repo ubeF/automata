@@ -1,4 +1,4 @@
-module Regular.NFA (NFA (..), Transition, toDFA, getTransitionFunction, getAcceptFunction) where
+module Regular.NFA (NFA (..), toDFA, eval) where
 
 
 import qualified Data.Set as S
@@ -14,10 +14,8 @@ data NFA a b = NFA {
   , accept :: [a]
 } deriving (Show)
 
-type Transition state input = state -> Maybe input -> [state]
 
-
-getTransitionFunction:: (Ord state, Ord input) => NFA state input -> Transition state input
+getTransitionFunction:: (Ord state, Ord input) => NFA state input -> (state -> Maybe input -> [state])
 getTransitionFunction nfa = function
   where (stateInputs, inputs, _) = unzip3 . transitions $ nfa
         resultLists = zipWith (\a b -> map (\(_, _, z) -> z) . filter (\(x, y, _) -> a==x && b==y) $ transitions nfa) stateInputs inputs
@@ -25,9 +23,6 @@ getTransitionFunction nfa = function
         function state input = case M.lookup (state, input) valMap of
           Nothing -> []
           (Just val) -> val
-
-getAcceptFunction :: (Eq state) => NFA state input -> (state -> Bool)
-getAcceptFunction nfa = (`elem` accept nfa)
 
 getEpsilonClosure :: (Ord input, Ord state) => NFA state input -> (state -> S.Set state)
 getEpsilonClosure nfa state = S.unions . (S.singleton state :) . map (getEpsilonClosure nfa) . epsilonTransition $ state
@@ -60,7 +55,7 @@ toDFA nfa = D.normalize $ D.DFA {
   where dict = potentiateStates nfa
         trans = concatMap (\(x, tuples) -> map (\(y, z) -> (x, y, z)) tuples) . M.toList $ dict
 
-eval :: (Ord state) => NFA state Char -> String -> Bool
+eval :: (Ord state, Ord input) => NFA state input -> [input] -> Bool
 eval nfa = isAccepted . foldr trans start 
   where trans = flip $ getSetTransitionFunction nfa
         isAccepted = not . S.disjoint (S.fromList . accept $ nfa)
