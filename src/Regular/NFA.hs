@@ -4,6 +4,7 @@ module Regular.NFA (NFA (..), toDFA, eval) where
 import qualified Data.Set as S
 import qualified Regular.DFA as D
 import qualified Data.Map as M
+import Graph (Graph, fromFunction, toList, vertices)
 
 
 data NFA a b = NFA {
@@ -34,26 +35,20 @@ getSetTransitionFunction nfa = func
         transition symbol state = (getTransitionFunction nfa) state (Just symbol)
         func states symbol = S.unions . S.map (S.unions . map epsilonClosure . transition symbol) $ states
 
-potentiateStates :: (Ord input, Ord state) => NFA state input -> M.Map (S.Set state) [(input, S.Set state)]
-potentiateStates nfa = go start M.empty
+potentiateStates :: (Ord input, Ord state) => NFA state input -> Graph (S.Set state) input
+potentiateStates nfa = fromFunction trans start (alphabet nfa)
   where trans = getSetTransitionFunction nfa
         start = getEpsilonClosure nfa $ initial nfa
-        go states dict
-          | M.member states dict = dict
-          | otherwise = foldr go newDict results
-            where results = map (trans states) . alphabet $ nfa
-                  newDict = M.insert states (zip (alphabet nfa) results) dict
 
 toDFA :: (Ord input, Ord state) => NFA state input -> D.DFA Int input
 toDFA nfa = D.normalize $ D.DFA {
     D.alphabet = alphabet nfa
-  , D.transitions = trans
-  , D.accept = filter (\x -> not $ S.disjoint x (S.fromList . accept $ nfa)) . M.keys $ dict
+  , D.transitions = toList graph
+  , D.accept = filter (\x -> not $ S.disjoint x (S.fromList . accept $ nfa)) . vertices $ graph
   , D.initial = getEpsilonClosure nfa (initial nfa)
-  , D.states = M.keys dict
+  , D.states = vertices graph
   }
-  where dict = potentiateStates nfa
-        trans = concatMap (\(x, tuples) -> map (\(y, z) -> (x, y, z)) tuples) . M.toList $ dict
+  where graph = potentiateStates nfa
 
 eval :: (Ord state, Ord input) => NFA state input -> [input] -> Bool
 eval nfa = isAccepted . foldr trans start 

@@ -33,6 +33,7 @@ library
       Tokenizer
       Tokenizer.DFA
       ContextFree.PDA
+      Graph
   other-modules:
       Paths_automata
   hs-source-dirs:

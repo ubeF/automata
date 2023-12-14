@@ -39,6 +39,7 @@ library:
     - Tokenizer
     - Tokenizer.DFA
     - ContextFree.PDA
+    - Graph
 tests:
   automata-test:
     main:                Spec.hs
