@@ -33,11 +33,13 @@ library:
   exposed-modules:
     - Regular
     - Regular.NFA
+    - Regular.NFA.Operators
     - Regular.DFA
-    - Regular.Operators
+    - Regular.Minimal
     - Tokenizer
     - Tokenizer.DFA
     - ContextFree.PDA
+    - Graph
 tests:
   automata-test:
     main:                Spec.hs

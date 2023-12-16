@@ -1,9 +1,12 @@
-module Regular.DFA (DFA (..), eval, normalize, minimize, getTransitionFunction, getAcceptFunction, run, findJunkState, step, findNecessarilyDistinctPairs, findNonDistinctPairs, lookAhead) where
+module Regular.DFA (DFA (..), eval, normalize, minimize) where
+
 
 import Data.Maybe
 import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.List as L
+import qualified Regular.Minimal as RM
+
 
 data DFA a b = DFA {
     states :: [a]
@@ -13,6 +16,7 @@ data DFA a b = DFA {
   , accept :: [a]
 }
 
+
 getTransitionFunction :: (Ord a, Ord b) => DFA a b -> (a -> b -> a)
 getTransitionFunction dfa = func
   where func state input = fromJust (M.lookup (state, input) transMap)
@@ -21,13 +25,6 @@ getTransitionFunction dfa = func
 
 getAcceptFunction :: (Eq a) => DFA a b -> (a -> Bool)
 getAcceptFunction dfa = (`elem` accept dfa)
-
-findJunkState :: (Ord a, Ord b) => DFA a b -> Maybe a
-findJunkState dfa = case filter (\(a, b) -> all (==a) b) resultPairs of
-    [] -> Nothing
-    (x:_) -> Just . fst $ x
-  where f = getTransitionFunction dfa
-        resultPairs = zip (states dfa) $ map (\x -> map (f x) (alphabet dfa)) (states dfa)
 
 eval :: (Ord a, Ord b) => DFA a b -> [b] -> Bool
 eval dfa xs = getAcceptFunction dfa . initial $ run dfa xs
@@ -59,8 +56,15 @@ normalize dfa = transformStates func dfa
         func x = fromJust $ M.lookup x valMap
 
 
-minimize :: (Ord a, Ord b) => DFA a b -> DFA Int b
-minimize dfa = normalize . removeDuplicateStates . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
+minimize :: (Ord a, Ord b) => DFA a b -> RM.DFA Int b
+minimize dfa = RM.DFA {
+    RM.states = states tmp
+  , RM.transition = getTransitionFunction tmp
+  , RM.alphabet = alphabet tmp
+  , RM.initial = initial tmp
+  , RM.accept = accept tmp
+  }
+  where tmp = normalize . removeDuplicateStates . mergeStates dfa . findNonDistinctPairs dfa . findNecessarilyDistinctPairs $ dfa
 
 findNecessarilyDistinctPairs :: (Ord a) => DFA a b -> (S.Set (S.Set a), S.Set (S.Set a))
 findNecessarilyDistinctPairs dfa = (potentialPairs, distinctPairs)

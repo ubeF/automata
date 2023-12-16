@@ -2,8 +2,10 @@
 
 module Regular (NFA, (<+>), star, epsilon, lit, times, range, word) where
 
-import Regular.NFA (NFA, normalize)
-import Regular.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate )
+
+import Regular.NFA (NFA)
+import Regular.NFA.Operators ( logicalOr, singleton, kleeneStar, emptyWord, concatenate, normalize )
+
 
 instance (Ord a) => Semigroup (NFA Int a) where
   (<>) a b = normalize $ concatenate a b

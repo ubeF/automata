@@ -27,11 +27,13 @@ library
   exposed-modules:
       Regular
       Regular.NFA
+      Regular.NFA.Operators
       Regular.DFA
-      Regular.Operators
+      Regular.Minimal
       Tokenizer
       Tokenizer.DFA
       ContextFree.PDA
+      Graph
   other-modules:
       Paths_automata
   hs-source-dirs:
