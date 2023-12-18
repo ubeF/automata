@@ -9,8 +9,13 @@ This library will therefore be extended and improved upon as i learn more about 
 Currently implemented features:
   - Creation of Deterministic Finite Automata (DFA)
   - Evaluation of DFAs
+  - Minimization of DFAs
   - Creation of Non-deterministic Finite Automata (NFA)
   - Evaluation of NFAs
   - Conversion from NFAs to DFAs
   - Operators and Generators for NFAs
-  - Minimalistic Tokenizer using minimized DFAs
+  - Minimalistic lexer-generator using minimized DFAs
+
+Planned features:
+  - Regex parser
+  - Simple parser-generator
